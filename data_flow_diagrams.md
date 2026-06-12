@@ -152,7 +152,7 @@ flowchart LR
         T0_1["Gross BTC-neutral returns từ labeler.compute_gross()\n(btc_closes từ M-D2 — KHÔNG phải M-D4 features)\nSpearman IC — toàn sample, no CV"]
         T0_2["Rough cost = turnover × round_trip_bps (M-R7)\nK3: cost_bps / (|IC|×1000) > 0.40 → KILL"]
         T0_3["Dynamic threshold (Cochrane AR(1) effective_n):\n  n<300 strict: IC>0.030, CostAdj>0.020\n  300-600 std: IC>0.025, CostAdj>0.015\n  n>600 relaxed: IC>0.020, CostAdj>0.012"]
-        T0_4{{"K1: |IC| < threshold → KILL\nK2: cost_adj_ic < threshold → KILL\nK3: cost > 40% IC edge → KILL\nBORDERLINE: |IC| ∈ [0.015, threshold) → manual review\nsignal_direction = -1 → caller invert signal trước T1!"}}
+        T0_4{{"K1: |IC| < threshold → KILL\nK2: cost_adj_ic < threshold → KILL\nK3: cost > 40% IC edge → KILL\nBORDERLINE: |IC| ∈ [0.015, threshold) → manual review\nsignal_direction = -1 → T1 TỰ invert (caller pass raw signal)"}}
         T0_1 --> T0_2 --> T0_3 --> T0_4
     end
 
@@ -179,7 +179,7 @@ flowchart LR
     subgraph NB_T2["📓 T2 Full Diligence — ≤1 ngày\nnghien_cuu/nha_may_alpha/t2_diligence.py — M-R5"]
         direction TB
         T2_1["T2.1: Vectorized backtest 2 năm\nSharpe > 0.8 (aim 1.2) | max_dd < 25%\nir_vs_benchmark ≥ 0.20\nexecution_lag_bars=1, execution_price=open_next\nrolling_vol_window=21 bars\nFunding settlement-aligned (không per-bar):\n  charge CHỈ khi position open TRƯỚC và TẠI settlement"]
-        T2_2["T2.2: Walk-forward 6 windows\nwf_ic_std < 0.50 × wf_ic_mean\n[WF dates PHẢI pre-defined trong research.yaml ✅\ncùng lúc với t1_fold_dates — BLOCKED nếu không có]"]
+        T2_2["T2.2: Walk-forward n_windows (5 theo research.yaml)\nwf_ic_std < 0.50 × wf_ic_mean\n[WF dates PHẢI pre-defined trong research.yaml ✅\ncùng lúc với t1_fold_dates — BLOCKED nếu không có\ntest windows KHÔNG chạm holdout]"]
         T2_3["T2.3: Stress test\nLuna + FTX (mandatory) + 20 random high-vol (seed cố định)\npass ≥ 14/20 random periods"]
         T2_4["Dual fill: Scenario A ≥ 0.80 AND Scenario B ≥ 0.75\n(Scenario B gate thấp hơn 5% = fill rate haircut, không phải free pass)\nT2.7: Marginal Sharpe > 0.05\nT2.8: IC halflife[stressed] kill <2 bars, warn <5 bars\nT2.9: Cascade Exit — cascade_impact < 0.30\n(M-R11 Mode B live/backtest gap)"]
         T2_5{{"ALL checks pass?\nLive haircut expect: 30–60% từ backtest IC"}}
@@ -407,7 +407,7 @@ flowchart LR
     subgraph T2_GATE["📊 T2 Full Diligence — ≤1 ngày\nnghien_cuu/nha_may_alpha/t2_diligence.py"]
         direction TB
         T2G1["Vectorized backtest 2 năm (Polars)\nSharpe > 0.8 | aim 1.2 | max_dd < 25%\nir_vs_benchmark ≥ 0.20\nexecution_lag_bars=1 (open_next)\nrolling_vol_window=21\nFunding settlement-aligned (không per-bar):\n  charge chỉ tại bar settlement khi position open"]
-        T2G2["Walk-forward 6 windows\nwf_ic_std < 0.50 × wf_ic_mean\n[BLOCKED nếu wf_test_dates không có\ntrong research.yaml ✅ trước T1]"]
+        T2G2["Walk-forward n_windows (5 theo research.yaml)\nwf_ic_std < 0.50 × wf_ic_mean\n[BLOCKED nếu wf_test_dates không có\ntrong research.yaml ✅ trước T1\ntest windows KHÔNG chạm holdout]"]
         T2G3["Stress: Luna 2022-05 + FTX 2022-11\n+ 20 random high-vol (seed cố định) ≥ 14/20 pass\nNot negative BOTH mandatory periods"]
         T2G4["T2.7: marginal_sharpe > 0.05 (khi có existing alpha)\nT2.8: IC halflife[stressed] ≥ 2 bars (kill < 2)\nDual fill: Scenario A ≥ 0.80 AND Scenario B ≥ 0.75\nScenario B: taker=8bps adv_sel (2× maker=4bps)\nT2.9: Cascade Exit — cascade_impact < 0.30\n  ACTUAL (M-R11) hoặc PROXY (range+volume)\n  cascade_mode='PROXY' → revalidate_t29=True\nT2.10: Sharpe positive ≥ 3/5 market states\nT2.11: Feature drift KS kill nếu p<0.01 AND ks>0.20"]
         T2G5{{"ALL pass?\nExpect 30–60% IC haircut live"}}
@@ -823,11 +823,11 @@ flowchart LR
     end
 
     subgraph T0B["T0 SCREEN — ≤15 phút\nt0_screen.py — M-R3"]
-        T0A["IC + cost gate\nDynamic threshold (effective_n)\nOverride: set ExperimentRecord.t0_override=True\n+ ExperimentRecord.notes (lý do)\nmax 2/family (honor system Phase 0)\nT1Result.t0_override propagate → AlphaRecord"]
+        T0A["IC + cost gate\nDynamic threshold (effective_n)\nOverride: ExperimentRegistry.set_t0_override(id, reason)\n(append event — record frozen, registry.load() resolve)\nmax 2/family (honor system Phase 0)\nT1Result.t0_override propagate → AlphaRecord"]
     end
 
     subgraph T1B["T1 VALIDATE — ≤2 giờ\nPhải pass Leakage Audit trước\nt1_validate.py — M-R4"]
-        T1A["PurgedKFold + DSR + ICIR (9 checks)\nICIR = mean(CV_IC_folds) / std(CV_IC_folds)\n  Kill nếu ICIR < 1.0, Warn nếu < 1.5\nT1.4 capacity | T1.5 corr_registry | T1.6 joint OLS beta\nT1.7 Ridge stability | T1.8 ic_short | T1.9 breadth ≥ 30%\nn_trials = unique config_hash per data_window (cross-family)"]
+        T1A["PurgedKFold + DSR + ICIR (9 checks)\nICIR = mean(CV_IC_folds) / std(CV_IC_folds)\n  Kill nếu ICIR < 1.0, Warn nếu < 1.5\nT1.4 capacity | T1.5 corr_registry | T1.6 joint OLS beta\nT1.7 Ridge stability | T1.8 ic_short | T1.9 breadth ≥ 30%\nn_trials = line count counter per data_window\n(create dedup config_hash + increment events, cross-family)"]
     end
 
     subgraph T2B["T2 FULL DILIGENCE — ≤1 ngày\nt2_diligence.py — M-R5"]
