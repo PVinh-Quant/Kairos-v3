@@ -2,7 +2,7 @@
  
 <img width="124" height="124" alt="image" src="https://github.com/user-attachments/assets/bf450abd-f468-43fa-9750-464e3ef95651" />
 
-# KAIROS v3.2
+# KAIROS v3
 ### **Hệ thống giao dịch định lượng (Quant Trading) tần suất trung bình (Mid-Frequency) tự động hóa toàn diện, với kiến trúc độ trễ thấp (Low-Latency)**
 
 [![Python](https://img.shields.io/badge/Python-3.13+-blue?style=for-the-badge&logo=python)](https://www.python.org/)
@@ -13,9 +13,9 @@
 
 | Trường | Giá trị |
 |--------|---------|
-| Phiên bản tài liệu | v3.5 |
-| Ngày cập nhật | 2026-06-12 |
-| Trạng thái | In Development — Layer 1 built & patched; Layer 3 ~95%; Layer 2 spec audit lần 2 (2026-06-11): M-R1 mất source code (cần rebuild từ spec), 4 xung đột spec HIGH chờ resolve |
+| Phiên bản tài liệu | v3.6 |
+| Ngày cập nhật | 2026-06-13 |
+| Trạng thái | In Development — Layer 1 built & patched; Layer 3 spec consistency pass (2026-06-13): 11 mâu thuẫn cross-module + 1 deadlock RG-6 đã fix; toàn bộ layer 1/2/4 docs đã sync theo `prompt/` (source of truth); xung đột cross-layer M-R9 ↔ M-L1 đã RESOLVED (baseline = backtest_ic_sim execution-adjusted; đếm ngày = calendar market days); Layer 2 spec audit lần 2 (2026-06-11): 4 xung đột spec HIGH ĐÃ RESOLVED trong prompt (double-invert M-R3↔M-R4, WF/holdout n_windows 6→5, n_trials line-count, signal_cache asset_id+overlap-guard) |
 | Phạm vi | Architecture specification & implementation reference cho KAIROS v3 |
 | Test coverage | 473 hàm test / 18 files trong `test/` (M-D0: 25, M-D1: 31, M-D2: 37, M-D3: 32, M-D4: 29, exits: 64, ...) + 149 Layer 2 spec test definitions |
 
@@ -253,7 +253,7 @@ KAIROS v3/
 │   │   ├── symbol_remapper.py          # [M-D3] RENAME/FORK corporate actions, symbol history
 │   │   ├── seed_sector_assignments.py  # [M-D3] One-time seeder: sector_map.yaml → DB
 │   │   ├── feature_cache.py            # [M-D4] FeatureCache, atomic write, cache_hash, BTC-first
-│   │   └── pre_aggregate_l2.py         # [M-D4] L2→OFI, binary snapshot store (KHÔNG delete)
+│   │   └── pre_aggregate_l2.py         # [M-D4] L2→OFI, binary snapshot store (KHÔNG delete; M-H1 NV2: + sequence/receive-ts + trade stream)
 │   └── ong_dan_dac_trung/              # (Feature Pipeline) <10µs/tick
 │       └── online/
 │           ├── feature_registry.py     # FEATURE_REGISTRY + CompiledPlan
@@ -279,7 +279,7 @@ KAIROS v3/
 # ==========================================
 ├── hoc_may/
 │   ├── mo_hinh/                        # (Models) LSTM, Transformer — [PLANNED, chưa tồn tại]
-│   ├── huan_luyen/                     # [M-R1] Script train model — [SOURCE MẤT 2026-06-11, rebuild từ spec]
+│   ├── huan_luyen/                     # [M-R1] Script train model — [CHƯA BUILD — viết code từ spec]
 │   ├── suy_luan/                       # ONNX/TensorRT Inference
 │   ├── to_hop_alpha/                   # (Alpha Combiner)
 │   └── giam_sat_mo_hinh/               # (ML MONITORING)
@@ -472,7 +472,7 @@ KAIROS v3/
 | Position State | `thoat_vi_the/position_state.py` | 75 | Implemented | — |
 | Position Sizer | `thoat_vi_the/position_sizer.py` | 51 | Implemented | `test_position_sizer.py` (14 tests) |
 | Exit Strategies (×6) | `thoat_vi_the/strategies/` | 309 | Implemented | `test_strategies.py` (32 tests) |
-| **Layer 2 Research Spec** | `prompt/layer2_research/` (11 R modules) | spec | Spec complete (2026-06-03); audit lần 2 (2026-06-11): M-R1 mất source, 4 xung đột spec HIGH chờ resolve | 149 test defs |
+| **Layer 2 Research Spec** | `prompt/layer2_research/` (11 R modules) | spec | Spec complete (2026-06-03); audit lần 2 (2026-06-11): 4 xung đột HIGH đã resolved trong prompt; còn M-R1 chưa build (viết code từ spec) | 149 test defs |
 | Research / Replay Engine | `nghien_cuu/` | — | Build Phase 0–1 (spec ready) | — |
 | ML / ONNX Inference | `hoc_may/suy_luan/` | — | Build Phase 2 | — |
 | Stack Launchers | `kich_ban/` | 147 | Implemented | — |
@@ -725,7 +725,7 @@ Pre-compute và cache feature matrices cho research. Cache invalidated by featur
 * `khung_alpha/feature_spec.py` — `FeatureSpec` frozen dataclass (11 fields); `FEATURE_SPECS` 12 entries (return_1h/4h, funding_raw/z, oi_1h/4h, volume_ratio, basis, btc_neutral_1h/4h, spread, book_pressure); DAG cycle validation tại import time (INV-D4.24)
 * `khung_alpha/feature_registry.py` — `FEATURE_REGISTRY` 12 module-level `FeatureFn`; Winsorize [1%,99%] rolling 90d cho return_1h/4h; 5×IQR outlier flag cho funding_raw + oi_change; Welford expanding z-score funding_z_30d (INV-D4.19); Rolling OLS 504 bars btc_neutral + BTC 20% coverage check (INV-D4.22); Phase 0 L2 features: `warm=True` ngay tại bar 1, return NaN (INV-D4.27); `IncrementalFeatureEngine` topo-sort + sync-emit + inject_context (INV-D4.28); `FeatureSpecRegistry` — M-D0 PIT Verifier bridge
 * `xu_ly_lo/feature_cache.py` — `compute_feature_logic_hash()` SHA-256(AST bundle); 12-char `cache_hash`; `write_cache()` atomic + provenance metadata (INV-D4.21/23); `FeatureCache.get_or_compute()` idempotent, BTC-first ordering, stale context fix
-* `xu_ly_lo/pre_aggregate_l2.py` — `L2Snapshot` binary encode/decode; `store_raw_snapshot()` append daily `.bin` (**KHÔNG BAO GIỜ delete**); OFI formula Cont-Kukanov-Stoikov 2014; `compute_book_pressure_5min()` 12 windows, <6 → NaN (INV-D4.11b)
+* `xu_ly_lo/pre_aggregate_l2.py` — `L2Snapshot` binary encode/decode; `store_raw_snapshot()` append daily `.bin` (**KHÔNG BAO GIỜ delete**); OFI formula Cont-Kukanov-Stoikov 2014; `compute_book_pressure_5min()` 12 windows, <6 → NaN (INV-D4.11b). **M-H1 Nghĩa vụ 2 (spec — mở rộng):** lưu kèm receive timestamp + lastUpdateId/sequence + depth coverage metadata, và raw trade stream (per-trade, không aggregate) — L2 diffs bị netted, trade stream là nguồn duy nhất decompose cancel-vs-trade cho HFT queue model sau này
 
 **Cache path:** `ho_du_lieu/kho_dac_trung/offline/{hash_12}/{asset_id}__{start}_{end}.parquet`
 
@@ -861,7 +861,9 @@ def _run_plan(self, symbol_id, event_type_id, exchange_ts, receive_ts):
 
 > **Status 2026-06-04:** Layer 2 spec đã hoàn thiện và audited (M-R1 → M-R11). Cross-audit Layer 1+2 phát hiện và fix **15 bugs** (3 critical, 7 significant, 5 minor) — xem chi tiết bên dưới. Sẵn sàng bắt đầu build Phase 0.
 >
-> **Status 2026-06-11 (audit lần 2):** Source code M-R1 (`hoc_may/huan_luyen/`) bị mất — chỉ còn `.pyc`, cần rebuild từ spec. Phát hiện **4 xung đột spec mức HIGH** giữa M-R1/R3/R4/R5/R6/R9, cần resolve trước khi build tiếp Phase 0.
+> **Status 2026-06-11 (audit lần 2):** Phát hiện **4 xung đột spec mức HIGH** giữa M-R1/R3/R4/R5/R6/R9 — **ĐÃ RESOLVED trong prompt** (cùng ngày, uncommitted lúc đó): (1) double-invert M-R3↔M-R4 → T1 là owner duy nhất của inversion, caller pass signal RAW; (2) WF windows vs holdout → n_windows 6→5 (`floor((in_sample−12)/3)`), splitter raise nếu test window chạm holdout; (3) n_trials → counter = line-count per data_window (create dedup config_hash, increment_trial append); (4) signal_cache → +asset_id + canonical path + overlap-guard (no-overlap 90d → DEFERRED, không PASS im lặng). **Còn lại:** M-R1 (`hoc_may/huan_luyen/`) **CHƯA được build** — spec sẵn sàng, cần viết code từ spec trước khi build tiếp Phase 0. (Không phải "mất source" — M-R1 chưa từng được tạo.)
+>
+> **Status 2026-06-13 (consistency pass toàn hệ + docs sync):** Cross-check logic 6 module layer3_live (11 mâu thuẫn + 1 deadlock RG-6 đã fix) rồi sync `docs/` theo `prompt/` (source of truth) cho toàn bộ layer 1/2/3/4. Layer 2 lệch docs: **M-R3** docs cũ 2-state → đúng là **3-state PASS/BORDERLINE/KILL** (hard floor 0.015, cost params 16/30); **M-R5** thêm **WARN tier + sharpe_tier**. Layer 1: M-D4 feature `funding_rate_8h` → `funding_rate_raw` (cấm rename), winsorization 5×IQR, M-D3/M-D4 status BUILT. **Xung đột cross-layer M-R9↔M-L1 RESOLVED**: shadow gate baseline = `backtest_ic_sim` (execution-adjusted, không phải t1_cv_ic_mean frictionless); đếm ngày = calendar market days (không phải signal-log).
 >
 > **Bug fixes 2026-06-04 (cross-layer audit):**
 >
@@ -880,11 +882,11 @@ def _run_plan(self, symbol_id, event_type_id, exchange_ts, receive_ts):
 
 | Module | File | Phase | Mô tả |
 |--------|------|-------|-------|
-| **M-R1** | `hoc_may/huan_luyen/` | Phase 0 | Model Training — Ridge default, ExperimentRecord, PurgedKFold, DSR. **Source mất (2026-06-11) — rebuild từ spec** |
+| **M-R1** | `hoc_may/huan_luyen/` | Phase 0 | Model Training — Ridge default, ExperimentRecord, PurgedKFold, DSR. **CHƯA BUILD — viết code từ spec** (CRITICAL GAP) |
 | **M-R2** | `nghien_cuu/danh_gia/leakage_audit.py` | Phase 0 | Leakage Audit — 14 checks, hard gate trước T1 |
-| **M-R3** | `nghien_cuu/nha_may_alpha/t0_screen.py` | Phase 0 | T0 Screen — IC + cost, ≤15 min |
-| **M-R4** | `nghien_cuu/nha_may_alpha/t1_validate.py` | Phase 0 | T1 Validate — PurgedKFold + DSR + 9 checks |
-| **M-R5** | `nghien_cuu/nha_may_alpha/t2_diligence.py` | Phase 1 | T2 Full Diligence — 11 checks |
+| **M-R3** | `nghien_cuu/nha_may_alpha/t0_screen.py` | Phase 0 | T0 Screen — IC + cost + stability, ≤15 min. 3-state **PASS/BORDERLINE/KILL** (hard floor 0.015) |
+| **M-R4** | `nghien_cuu/nha_may_alpha/t1_validate.py` | Phase 0 | T1 Validate — PurgedKFold + DSR + 9 checks (2-state PASS/KILL) |
+| **M-R5** | `nghien_cuu/nha_may_alpha/t2_diligence.py` | Phase 1 | T2 Full Diligence — 11 checks. 3-state **PASS/WARN/KILL** + sharpe_tier (BELOW_TARGET/CANDIDATE/DEPLOYMENT/STRONG) |
 | **M-R6** | `nghien_cuu/dong_co_phat_lai/vectorized_backtest.py` | Phase 0 | Polars vectorized backtest |
 | **M-R7** | `nghien_cuu/kiem_thu_qua_khu/ma_tran_sie_toc/` | Phase 0 | Cost Model — slippage + regime multiplier |
 | **M-R8** | `nghien_cuu/nha_may_alpha/factor_neutralizer.py` | Phase 1 | Factor Neutralization — joint BTC+ETH OLS |
@@ -895,7 +897,10 @@ def _run_plan(self, symbol_id, event_type_id, exchange_ts, receive_ts):
 **Key design decisions (từ spec audit):**
 - T0→T1→T2: 3-tier gate, không skip. T0 kills 85–95%, T1 kills 60–80%.
 - ExperimentRecord: 23 fields, config_hash auto-computed, n_trials_total = unique config_hash per data_window
-- AlphaRecord: 34 fields, frozen=True, PAPER→SHADOW cần **6 điều kiện** (INV-R9.2)
+- AlphaRecord: 37 fields, frozen=True; SCREENING→PAPER honor 3-state (T0 PASS/override, T2 PASS/WARN); PAPER→SHADOW cần **6 điều kiện** (INV-R9.2)
+- **Shadow gate baseline = `backtest_ic_sim`** (T2 chạy QUA chính M-L1 fill simulator — execution-adjusted), KHÔNG phải t1_cv_ic_mean frictionless: paper_ic_live tính trên filled subset (adverse-selected cơ học) → so với frictionless là apples-to-oranges. Đếm ngày gate = **calendar market days** (M-D2 SSOT, không phải signal-log). [Resolved M-R9↔M-L1 2026-06-13]
+- M-R3 T0: 3-state với hard floor |IC| < 0.015 (0.025 = ranh giới PASS/BORDERLINE standard mode); half-sample stability SIGN_FLIP; signal_direction ownership (T1 là nơi DUY NHẤT invert). Cost params round-trip maker 16 / taker 30 bps (khớp bảng M-R7)
+- M-R5 T2: WARN tier khi backtest_sharpe ∈ [0.80, 1.20) → max_paper_position 50%; stage sau T2 PASS vẫn SCREENING đến human sign-off
 - LIVE→HIBERNATING: `btc_alt_corr > 0.8 AND alt_xs_dispersion thấp` — liquidity vacuum KHÔNG trigger HIBERNATE (chỉ scale down 50%)
 - M-R6 backtest: execution_price="open_next", taker_adv_sel = 2× maker (8 bps vs 4 bps)
 - T1.6 BTC+ETH: joint OLS (không sequential) — implement trực tiếp trong T1.6, không phụ thuộc M-R8 Phase 1
@@ -904,7 +909,7 @@ Bất kỳ quỹ giao dịch định lượng nào cũng đối mặt với **Si
 
 * **Động cơ phát lại (`nghien_cuu/dong_co_phat_lai/`)** — M-R6 vectorized backtest (Polars-native, single file)
 * **Nhà máy Alpha (`nghien_cuu/nha_may_alpha/`)** — T0/T1/T2 + registry + cost model + factor neutral
-* **Kiểm thử quá khứ (`nghien_cuu/kiem_thu_qua_khu/`)** — vectorized (Polars) + event-driven (dành cho dự án HFT tương lai — tách riêng khỏi Kairos)
+* **Kiểm thử quá khứ (`nghien_cuu/kiem_thu_qua_khu/`)** — vectorized (Polars) + event-driven (dành cho dự án HFT tương lai — tách riêng khỏi Kairos; M-H1 là STRATEGIC GATE doc với 5 gates chưa trigger — KHÔNG build, chỉ "Nghĩa vụ lưu data" hiệu lực ngay: own-order lifecycle logs + raw L2/trade stream)
 * **Đánh giá (`nghien_cuu/danh_gia/`)** — leakage_audit, purged_kfold, dsr_calculator, walk_forward, stress_tester
 
 ---
@@ -1456,6 +1461,8 @@ def check(self, symbol, side, order_usdt, order_id) -> int:
 | 5 | `MaxOpenOrdersRule` | Giới hạn số lệnh đang mở trên mỗi symbol. Tránh "lệnh treo" quá nhiều ăn margin. | `max_open_orders_per_symbol` |
 | 6 | `MaxPositionConcentrationRule` | Không cho phép tập trung quá nhiều vốn vào 1 cặp coin. Đa dạng hóa bắt buộc. | `max_concentration_pct` |
 
+> **Built vs spec target:** 6 rules trên là phần ĐÃ BUILT (~70%). Spec đầy đủ M-L5 (`prompt/layer3_live/M-L5_risk_gate.md`) định nghĩa **RG-0 → RG-24** trong kiến trúc 2 tầng **GATE** (hot-path, pure function < 5ms) / **MONITORS** (background) + **WATCHDOG** (separate OS process, tiered MODE 1/2/3). Các check spec chưa build: RG-18 margin/liquidation, RG-19 VaR/ES incremental, RG-21 correlation shock, RG-22 depeg, RG-23 ADV, RG-24 PnL attribution, reduce-only exemption (4 điều kiện), pending notional reservation (TOCTOU), persistent halt state. Xem M-L5 còn thiếu (70%→100%) trong spec.
+
 **Rate Bucket O(1)** — 1000-bucket per-second window + 60-bucket per-minute window:
 
 ```python
@@ -1735,6 +1742,7 @@ gc_collections_delta: tuple[int, int, int]  # GC runs per generation
 * `alert_manager.py` — Orchestrator quản lý Alert với Deduplication (chống spam).
 * `alert_rules.py` — Rule Engine đánh giá cảnh báo dựa trên PnL, Latency, Error Rate.
 * `telegram_sender.py` — Gửi tin nhắn Alert qua Telegram Bot API.
+* Spec mở rộng (chưa build — xem `prompt/layer3_live/alert_management.md`): 4 severity tiers (CRITICAL 15min / ALERT 2h SLA / WARNING digest / INFO) + HFT data-retention alerts (M-H1 Nghĩa vụ): own-order log thiếu join key > 1%/ngày hoặc L2/trade collector down > 30 phút → ALERT (data mất là mất vĩnh viễn).
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d39e89ec-f3a2-4eb0-8b89-b194853be762" />
 
