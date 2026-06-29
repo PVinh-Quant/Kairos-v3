@@ -13,9 +13,9 @@
 
 | Trường | Giá trị |
 |--------|---------|
-| Phiên bản tài liệu | v3.6 |
-| Ngày cập nhật | 2026-06-13 |
-| Trạng thái | In Development — Layer 1 built & patched; Layer 3 spec consistency pass (2026-06-13): 11 mâu thuẫn cross-module + 1 deadlock RG-6 đã fix; toàn bộ layer 1/2/4 docs đã sync theo `prompt/` (source of truth); xung đột cross-layer M-R9 ↔ M-L1 đã RESOLVED (baseline = backtest_ic_sim execution-adjusted; đếm ngày = calendar market days); Layer 2 spec audit lần 2 (2026-06-11): 4 xung đột spec HIGH ĐÃ RESOLVED trong prompt (double-invert M-R3↔M-R4, WF/holdout n_windows 6→5, n_trials line-count, signal_cache asset_id+overlap-guard) |
+| Phiên bản tài liệu | v3.8 |
+| Ngày cập nhật | 2026-06-14 |
+| Trạng thái | In Development — Layer 1 built & patched; Layer 1/2/3 consistency passes completed (2026-06-14): Layer 1 initial audit (3 HIGH: funding_rate_raw, data_quality, FeatureSpecRegistry) + deep audit (3 HIGH: funding_rate_applied schema, settlement bar detection, M-D3→M-D0 dependency; 4 MEDIUM: symbol_lifecycle path, asset_id divergence, funding rate naming/APR, OI sourcing) — all resolved in prompt specs. Layer 2 audit (3 conflicts: OLS window 504, anomaly correlation, TRIGGER-F3 action resolved). Layer 3 audit (4 findings: shadow window, family_edge_exhaustion, M-L1/M-L5 dependencies resolved). All layer docs synchronized. |
 | Phạm vi | Architecture specification & implementation reference cho KAIROS v3 |
 | Test coverage | 473 hàm test / 18 files trong `test/` (M-D0: 25, M-D1: 31, M-D2: 37, M-D3: 32, M-D4: 29, exits: 64, ...) + 149 Layer 2 spec test definitions |
 
@@ -155,12 +155,12 @@ KAIROS v3/
 │
 ├── moi_truong_chay/                    # (RUNTIME ISOLATION) Tách biệt tuyệt đối
 │   ├── live/                           # [NEW] Chạy tiền thật — Live Orchestrator (production-oriented)
-│   │   ├── live_runner.py              # [NEW] 12-Step SRE Startup + Health/Reconcile Daemons (882 dòng)
+│   │   ├── live_runner.py              # [NEW] 12-Step SRE Startup + Health/Reconcile Daemons (1038 dòng)
 │   │   └── live_config.yaml            # [NEW] SRE-grade tuning: health, reconciliation, cancel policy
 │   ├── paper/                          # Chạy tiền ảo (Testnet)
 │   │   ├── audit_to_parquet.py         # Chuyển đổi dữ liệu kiểm toán sang Parquet
 │   │   ├── microstructure_model.py     # Mô phỏng vi cấu trúc thị trường
-│   │   ├── paper_ems_adapter.py        # Adapter thực thi cho Paper Trading (711 dòng)
+│   │   ├── paper_ems_adapter.py        # Adapter thực thi cho Paper Trading (832 dòng)
 │   │   ├── paper_runner.py             # Script chạy chính cho môi trường Paper
 │   │   ├── paper_state_manager.py      # Quản lý trạng thái lệnh ảo
 │   │   └── shock_simulator.py          # Giả lập các cú sốc thị trường
@@ -316,12 +316,12 @@ KAIROS v3/
 │   │   ├── position_sync.py            # [NEW] Startup Sync + Drift Detection + Healing
 │   │   ├── session_manager.py          # [NEW] Daily P&L Session Rotation + Archive
 │   │   ├── ke_toan_pnl/                # [NEW] Accounting: Realized/Unrealized PnL
-│   │   │   ├── pnl_aggregator.py       # Root PnL Orchestrator (622 dòng)
+│   │   │   ├── pnl_aggregator.py       # Root PnL Orchestrator (734 dòng)
 │   │   │   ├── pnl_tracker.py          # Integer-Scaled Realized PnL + OCC
 │   │   │   ├── fee_ledger.py           # Trade Fees + Funding Payments
 │   │   │   └── mark_to_market.py       # Live Mark Price + Unrealized PnL
 │   │   └── thoat_vi_the/               # [NEW] Exit Management System (EMS Exit Layer)
-│   │       ├── exit_coordinator.py     # [NEW] State machine + strategy dispatch (411 dòng)
+│   │       ├── exit_coordinator.py     # [NEW] State machine + strategy dispatch (475 dòng)
 │   │       ├── position_state.py       # [NEW] FLAT→OPEN→CLOSING→PARTIAL→CLOSED→QUARANTINED
 │   │       ├── position_sizer.py       # [NEW] Anti-flip qty calculator
 │   │       ├── audit_logger.py         # [NEW] Append-only exit audit trail (daily rotation)
@@ -336,14 +336,14 @@ KAIROS v3/
 │   │           └── time_based.py       # [NEW] Max hold time forced exit
 │   ├── danh_ba_chien_luoc/             # (STRATEGY REGISTRY)
 │   ├── quan_ly_lenh/                   # [NEW] (OMS) Order Management System
-│   │   ├── order_book.py               # In-Memory Sổ Lệnh + Per-Symbol Lock (656 dòng)
+│   │   ├── order_book.py               # In-Memory Sổ Lệnh + Per-Symbol Lock (763 dòng)
 │   │   ├── reconciler.py               # Exchange Reconciliation + Cancel-All
 │   │   └── oms_serializer.py           # Binary WAL Payload Codec (32B)
 │   ├── dong_co_thuc_thi/               # (EMS) Execution Management
 │   │   ├── ems.py
 │   │   └── execution_risk_engine.py
 │   ├── theo_doi_do_tre/                # (LATENCY TRACKER)
-│   └── vong_lap_su_kien.py             # (Event Loop) — 1105 dòng, trái tim hệ thống
+│   └── vong_lap_su_kien.py             # (Event Loop) — 1251 dòng, trái tim hệ thống
 │
 # ==========================================
 # 7. LƯỚI BẢO VỆ (RISK SYSTEM)
@@ -352,7 +352,7 @@ KAIROS v3/
 │   ├── rui_ro_cheo_chien_luoc/         # Cross-Strategy Risk
 │   │   ├── bu_tru_vi_the/              # Exposure Netting
 │   │   └── xung_dot_tin_hieu/          # Conflict Detector
-│   ├── kiem_tra_truoc_lenh/            # Pre-trade Risk (risk_gate.py 557 dòng)
+│   ├── kiem_tra_truoc_lenh/            # Pre-trade Risk (risk_gate.py 646 dòng)
 │   │   ├── rules/
 │   │   │   ├── base_rule.py
 │   │   │   ├── global_rules.py         # MaxDailyLoss, MaxDrawdown
@@ -364,7 +364,7 @@ KAIROS v3/
 │   └── nguoi_gac_cong/                 # (Watchdog) Kill Switch
 │       └── watchdog/
 │           ├── watchdog.py
-│           ├── emergency_flattener.py  # [NEW] Standalone REST flatten Binance/OKX/Bybit (374 dòng)
+│           ├── emergency_flattener.py  # [NEW] Standalone REST flatten Binance/OKX/Bybit (438 dòng)
 │           └── adapters/
 │               ├── lite_rest.py
 │               └── war_grade_rest.py
@@ -435,7 +435,7 @@ KAIROS v3/
 # ==========================================
 └── kich_ban/
     ├── __init__.py                     # Package marker
-    ├── khoi_dong.py                    # Stack launcher lõi: preflight, process manager, shutdown (147 dòng)
+    ├── khoi_dong.py                    # Stack launcher lõi: preflight, process manager, shutdown (181 dòng)
     ├── khoi_dong_live.py               # Entry point tiền thật: `make live`
     ├── khoi_dong_paper.py              # Entry point tiền ảo: `make paper-launch`
     └── dao_tao_lai_model.py            # Re-train ML model pipeline
@@ -454,28 +454,28 @@ KAIROS v3/
 | **M-D2: Gap Reconciliation** | `xu_ly_lo/` (8 files) | ~2800 | Implemented | `test_d2_gap_reconciliation.py` (37 tests) |
 | **M-D3: PiT Universe Manager** | `xu_ly_lo/` (3 files) | ~750 | Implemented | `test_d3_pit_universe.py` (32 tests) |
 | **M-D4: Feature Cache** | `xu_ly_lo/` (2 files) + `khung_alpha/` (3 files) | ~900 | Implemented | `test_d4_feature_cache.py` (29 tests) |
-| Live Orchestrator | `live_runner.py` | 882 | Implemented | `test_live_runner.py` (14 components) |
-| Paper EMS Adapter | `paper_ems_adapter.py` | 711 | Implemented | `test_paper_adapter_queries.py` (10 tests) |
-| Execution Gateway | `vong_lap_su_kien.py` | 1105 | Implemented | `test_execution_pipeline.py` |
-| OMS — OrderBook | `order_book.py` | 656 | Implemented | — |
-| PnL Aggregator | `pnl_aggregator.py` | 622 | Implemented | `test_session_pnl.py` (20 tests) |
-| Session Manager | `session_manager.py` | 575 | Implemented | `test_session_pnl.py` |
-| Risk Gate | `risk_gate.py` | 557 | Implemented | `test_chaos_risk.py` |
-| Position Synchronizer | `position_sync.py` | 383 | Implemented | `test_position_funding.py` (13 tests) |
-| Execution Wrapper | `execution_wrapper.py` | 380 | Implemented | — |
-| Feature Engine | `incremental_engine.py` | 353 | Implemented | `test_feature_layer.py` |
-| Reconciler | `reconciler.py` | 346 | Implemented | — |
-| Durable WAL | `durable_wal.py` | 290 | Implemented | `test_state.py` |
-| Funding Collector | `funding_collector.py` | 234 | Implemented | `test_position_funding.py` |
-| Exit Coordinator | `thoat_vi_the/exit_coordinator.py` | 411 | Implemented | `test_exit_coordinator.py` (18 tests) |
-| Emergency Flattener | `watchdog/emergency_flattener.py` | 374 | Implemented | — |
-| Position State | `thoat_vi_the/position_state.py` | 75 | Implemented | — |
-| Position Sizer | `thoat_vi_the/position_sizer.py` | 51 | Implemented | `test_position_sizer.py` (14 tests) |
-| Exit Strategies (×6) | `thoat_vi_the/strategies/` | 309 | Implemented | `test_strategies.py` (32 tests) |
-| **Layer 2 Research Spec** | `prompt/layer2_research/` (11 R modules) | spec | Spec complete (2026-06-03); audit lần 2 (2026-06-11): 4 xung đột HIGH đã resolved trong prompt; còn M-R1 chưa build (viết code từ spec) | 149 test defs |
+| Live Orchestrator | `live_runner.py` | 1038 | Implemented | `test_live_runner.py` (14 components) |
+| Paper EMS Adapter | `paper_ems_adapter.py` | 832 | Implemented | `test_paper_adapter_queries.py` (10 tests) |
+| Execution Gateway | `vong_lap_su_kien.py` | 1251 | Implemented | `test_execution_pipeline.py` |
+| OMS — OrderBook | `order_book.py` | 763 | Implemented | — |
+| PnL Aggregator | `pnl_aggregator.py` | 734 | Implemented | `test_session_pnl.py` (20 tests) |
+| Session Manager | `session_manager.py` | 662 | Implemented | `test_session_pnl.py` |
+| Risk Gate | `risk_gate.py` | 646 | Implemented | `test_chaos_risk.py` |
+| Position Synchronizer | `position_sync.py` | 441 | Implemented | `test_position_funding.py` (13 tests) |
+| Execution Wrapper | `execution_wrapper.py` | 435 | Implemented | — |
+| Feature Engine | `incremental_engine.py` | 422 | Implemented | `test_feature_layer.py` |
+| Reconciler | `reconciler.py` | 400 | Implemented | — |
+| Durable WAL | `durable_wal.py` | 354 | Implemented | `test_state.py` |
+| Funding Collector | `funding_collector.py` | 266 | Implemented | `test_position_funding.py` |
+| Exit Coordinator | `thoat_vi_the/exit_coordinator.py` | 475 | Implemented | `test_exit_coordinator.py` (18 tests) |
+| Emergency Flattener | `watchdog/emergency_flattener.py` | 438 | Implemented | — |
+| Position State | `thoat_vi_the/position_state.py` | 91 | Implemented | — |
+| Position Sizer | `thoat_vi_the/position_sizer.py` | 65 | Implemented | `test_position_sizer.py` (14 tests) |
+| Exit Strategies (×6) | `thoat_vi_the/strategies/` | 381 | Implemented | `test_strategies.py` (32 tests) |
+| **Layer 2 Research Spec** | `prompt/layer2_research/` (11 R modules) | spec | Spec complete (2026-06-03); audit lần 2 (2026-06-11); consistency audit (2026-06-14): 3 mâu thuẫn (1 HIGH OLS window, 2 MED correlation/trigger actions) resolved/documented; còn M-R1 chưa build (viết code từ spec) | 149 test defs |
 | Research / Replay Engine | `nghien_cuu/` | — | Build Phase 0–1 (spec ready) | — |
 | ML / ONNX Inference | `hoc_may/suy_luan/` | — | Build Phase 2 | — |
-| Stack Launchers | `kich_ban/` | 147 | Implemented | — |
+| Stack Launchers | `kich_ban/` | 181 | Implemented | — |
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7208720b-877d-4960-8e0d-1f991cbd9ca1" />
 
@@ -517,7 +517,7 @@ Không dùng "mock" đơn giản. Đây là một sàn giao dịch nội bộ m�
 
 #### Môi trường Live Trading (`moi_truong_chay/live/`) — Live Orchestrator (production-oriented)
 
-File `live_runner.py` — **882 dòng**, là module khởi động toàn bộ pipeline giao dịch thật (real money). Tuân thủ kiến trúc **SRE-grade 12-Step Fail-Fast Startup**:
+File `live_runner.py` — **1038 dòng**, là module khởi động toàn bộ pipeline giao dịch thật (real money). Tuân thủ kiến trúc **SRE-grade 12-Step Fail-Fast Startup**:
 
 ```
 Step  1: system.KILLED check           ← Abort ngay nếu sentinel tồn tại
@@ -863,6 +863,12 @@ def _run_plan(self, symbol_id, event_type_id, exchange_ts, receive_ts):
 >
 > **Status 2026-06-11 (audit lần 2):** Phát hiện **4 xung đột spec mức HIGH** giữa M-R1/R3/R4/R5/R6/R9 — **ĐÃ RESOLVED trong prompt** (cùng ngày, uncommitted lúc đó): (1) double-invert M-R3↔M-R4 → T1 là owner duy nhất của inversion, caller pass signal RAW; (2) WF windows vs holdout → n_windows 6→5 (`floor((in_sample−12)/3)`), splitter raise nếu test window chạm holdout; (3) n_trials → counter = line-count per data_window (create dedup config_hash, increment_trial append); (4) signal_cache → +asset_id + canonical path + overlap-guard (no-overlap 90d → DEFERRED, không PASS im lặng). **Còn lại:** M-R1 (`hoc_may/huan_luyen/`) **CHƯA được build** — spec sẵn sàng, cần viết code từ spec trước khi build tiếp Phase 0. (Không phải "mất source" — M-R1 chưa từng được tạo.)
 >
+> **Status 2026-06-14 (Đồng bộ toàn diện Layer 1/2/3):** Thực hiện kiểm tra tính đồng bộ logic liên module trên cả 3 Layer (Data, Research, Live):
+> - **Layer 1 (Data Core) — Audit ban đầu:** 3 mâu thuẫn HIGH đã được giải quyết: (1) `funding_rate_raw` thống nhất để NaN ở non-settlement bars nhằm tránh lỗi tính toán z-score của M-D4; (2) đồng bộ enum `data_quality` (`1=rest_filled, 2=suspect`); (3) làm rõ `FeatureSpecRegistry` thuộc M-D4.
+> - **Layer 1 (Data Core) — Deep audit:** Thêm 3 HIGH + 4 MEDIUM đã fix triệt để: **(H1)** M-D2 thêm cột `funding_rate_applied` (= `funding_rate_raw × mark_price × position_size`, non-null tại settlement bars) vào MD2_SCHEMA; **(H2)** M-D4 sửa logic settlement bar detection: dùng `exchange_metadata.yaml` thay vì hardcode `is_settlement_bar`, thêm fallback `bar_hour in [0,8,16]`; **(H3)** M-D3 bổ sung `Depends on: M-D0` (LineageRegistry) thay vì poll trực tiếp — lifecycle state xác định qua M-D0 registry; **(M1)** M-D2 sửa path `symbol_lifecycle_raw` thành `ho_du_lieu/tho/lifecycle/symbol_lifecycle_raw.parquet` (khớp M-D0 output); **(M2)** M-D3 `asset_id` divergence: xác nhận UUID v5 = SSOT, M-D2 dùng `(exchange, symbol)` tuple chỉ là lookup key; **(M3)** M-D3 rename `funding_rate_8h` → `funding_rate_raw`, `annualized_rate` → `funding_rate_annual`, sửa APR comment `×3×365` → `×(365/funding_interval_days)`; **(M4)** M-D3 OI sourcing: ghi rõ `oi_usdt` lấy từ M-D1 bar (M-D2 cleaned), không tự REST poll.
+> - **Layer 2 (Research Core):** 3 mâu thuẫn chính đã được xử lý: (1) đồng bộ `window` tính beta của M-R8 thành 504 bars (21 ngày) để khớp với M-R1; (2) xác nhận M-R10 SCAN-4 tự tính độc lập; (3) chỉnh sửa TRIGGER-F3 của M-R9 thành HALT + giữ nguyên vị thế để khớp với M-R11/M-R6.
+> - **Layer 3 (Live Core):** 4 phát hiện đã đồng bộ: (1) sửa window của M-L1 thành 60 calendar market days; (2) bổ sung kênh `family_edge_exhaustion` từ M-L4 vào M-L3; (3) chốt định nghĩa `feature_drift_flag` (M-L2 status ∈ {ALERT, CRITICAL}); (4) bổ sung dependency M-L1 → M-L5.
+>
 > **Status 2026-06-13 (consistency pass toàn hệ + docs sync):** Cross-check logic 6 module layer3_live (11 mâu thuẫn + 1 deadlock RG-6 đã fix) rồi sync `docs/` theo `prompt/` (source of truth) cho toàn bộ layer 1/2/3/4. Layer 2 lệch docs: **M-R3** docs cũ 2-state → đúng là **3-state PASS/BORDERLINE/KILL** (hard floor 0.015, cost params 16/30); **M-R5** thêm **WARN tier + sharpe_tier**. Layer 1: M-D4 feature `funding_rate_8h` → `funding_rate_raw` (cấm rename), winsorization 5×IQR, M-D3/M-D4 status BUILT. **Xung đột cross-layer M-R9↔M-L1 RESOLVED**: shadow gate baseline = `backtest_ic_sim` (execution-adjusted, không phải t1_cv_ic_mean frictionless); đếm ngày = calendar market days (không phải signal-log).
 >
 > **Bug fixes 2026-06-04 (cross-layer audit):**
@@ -928,18 +934,18 @@ Bộ não của hệ thống. Trong khi các quy tắc rủi ro và thực thi l
 
 ### 3.6. Thực Thi Chiến Dịch (Execution Core)
 
-**Trách nhiệm:** Nhận `SignalEvent` từ ZMQ bus, qua 7 pre-trade gates, đẩy vào SPSC ring buffer, worker sizing lệnh và submit qua EMS. File chính `vong_lap_su_kien.py` — 1105 dòng.
+**Trách nhiệm:** Nhận `SignalEvent` từ ZMQ bus, qua 7 pre-trade gates, đẩy vào SPSC ring buffer, worker sizing lệnh và submit qua EMS. File chính `vong_lap_su_kien.py` — 1251 dòng.
 
 **Hợp đồng hiệu năng:** signal-to-ring-write < 10µs (Thread 1 hot-path, GC disabled). ring-read-to-HTTP-submit latency không bị bounded (network dependent).
 
 
 #### ExitCoordinator — Quản Lý Thoát Vị Thế
 
-`ExitCoordinator` (`thoat_vi_the/exit_coordinator.py`, 411 dòng) là state machine per-symbol vận hành trên Thread 2 event loop, chịu trách nhiệm hoàn toàn cho việc đóng vị thế. Khi Thread 3 nhận MarkPrice mới, nó gọi `call_soon_threadsafe(ec.on_price_tick, sym, price, ts)` để dispatch vào Thread 2 — không bao giờ block hot-path.
+`ExitCoordinator` (`thoat_vi_the/exit_coordinator.py`, 475 dòng) là state machine per-symbol vận hành trên Thread 2 event loop, chịu trách nhiệm hoàn toàn cho việc đóng vị thế. Khi Thread 3 nhận MarkPrice mới, nó gọi `call_soon_threadsafe(ec.on_price_tick, sym, price, ts)` để dispatch vào Thread 2 — không bao giờ block hot-path.
 
 Mỗi symbol có trạng thái `FLAT → OPEN → CLOSING → PARTIAL → CLOSED → QUARANTINED/ERROR`. Khi một lệnh mở vị thế fill thành công (trong `_fire()`), `on_position_opened()` được gọi để chuyển sang `OPEN`. Mỗi price tick, coordinator đánh giá tất cả exit strategies (FixedPercent, ATR-Based, TrailingStop, Breakeven, PartialExit, TimeBased) và đặt lệnh `MARKET reduce_only=True` trực tiếp qua adapter — **bypassing EMS hoàn toàn** vì lệnh đóng không cần pre-trade risk gate.
 
-`EmergencyFlattener` (`watchdog/emergency_flattener.py`, 374 dòng) là fallback cuối cùng: được Watchdog gọi khi kích hoạt kill switch, đóng tất cả vị thế đang mở trên mọi sàn và ghi `FLATTEN_LOCK` để chặn vĩnh viễn mọi lệnh mới cho đến khi con người can thiệp.
+`EmergencyFlattener` (`watchdog/emergency_flattener.py`, 438 dòng) là fallback cuối cùng: được Watchdog gọi khi kích hoạt kill switch, đóng tất cả vị thế đang mở trên mọi sàn và ghi `FLATTEN_LOCK` để chặn vĩnh viễn mọi lệnh mới cho đến khi con người can thiệp.
 
 #### Kiến trúc 5-Thread (`ExecutionGateway`)
 
@@ -1086,7 +1092,7 @@ def _heartbeat_loop(self):
         stop_event.wait(interval_s)   # Sleep nhưng có thể bị đánh thức
 ```
 
-#### Durable WAL (`durable_wal.py`) — 290 dòng
+#### Durable WAL (`durable_wal.py`) — 354 dòng
 
 **Trách nhiệm:** Ghi nhật ký mutation intent lên đĩa trước khi HTTP request được gửi. Cung cấp `best-known state` sau crash/restart trong phạm vi mutations đã được WAL bao phủ.
 
@@ -1138,9 +1144,9 @@ class WALEntryType(IntEnum):
 
 Hệ thống Quản lý Lệnh (OMS) là sổ cái trung tâm: mọi lệnh giao dịch phải được đăng ký, theo dõi, và đóng sổ tại đây trước khi rời khỏi hệ thống. OMS gồm 3 thành phần:
 
-* **`order_book.py` (656 dòng)**: Sổ lệnh in-memory với **Per-Symbol Locking**. Mỗi symbol (BTC, ETH, ...) có lock riêng — lệnh BTC không block lệnh ETH. Tài liệu này xem WAL là persistence contract của order state; muốn crash-recovery đáng tin cho production thì mọi transition quan trọng phải thực sự không có đường bypass.
-* **`reconciler.py` (346 dòng)**: Chạy định kỳ 60s, đối chiếu trạng thái OMS local với sàn. Phát hiện "missed fills" (lệnh đã khớp trên sàn nhưng OMS chưa biết do mất kết nối) và inject ngược vào pipeline.
-* **`oms_serializer.py` (112 dòng)**: Binary codec cho WAL payload — pack/unpack `OrderEntry` vào đúng 32 bytes bằng `ctypes.LittleEndianStructure`.
+* **`order_book.py` (763 dòng)**: Sổ lệnh in-memory với **Per-Symbol Locking**. Mỗi symbol (BTC, ETH, ...) có lock riêng — lệnh BTC không block lệnh ETH. Tài liệu này xem WAL là persistence contract của order state; muốn crash-recovery đáng tin cho production thì mọi transition quan trọng phải thực sự không có đường bypass.
+* **`reconciler.py` (400 dòng)**: Chạy định kỳ 60s, đối chiếu trạng thái OMS local với sàn. Phát hiện "missed fills" (lệnh đã khớp trên sàn nhưng OMS chưa biết do mất kết nối) và inject ngược vào pipeline.
+* **`oms_serializer.py` (135 dòng)**: Binary codec cho WAL payload — pack/unpack `OrderEntry` vào đúng 32 bytes bằng `ctypes.LittleEndianStructure`.
 
 > Nếu dùng Kairos làm reference cho OMS production, state machine tối thiểu nên được enforce rõ: `NEW -> ACK -> PARTIAL -> FILLED / CANCELED / REJECTED`. Bất kỳ transition nhảy cóc hoặc đi ngược phải bị xem là mismatch để reconcile hoặc halt.
 
@@ -1187,10 +1193,10 @@ def _gate_reject_reason(self) -> Optional[str]:
 
 **Kiến trúc:** Integer-Scaled Arithmetic + WAL-Backed Checkpoint + OCC:
 
-* **`pnl_aggregator.py` (622 dòng)**: Root orchestrator — điều phối `RealizedPnLTracker`, `FeeLedger`, và `MarkToMarket`. Sở hữu WAL checkpoint protocol, authority reconciliation, và crash-forensics dump.
-* **`pnl_tracker.py` (323 dòng)**: Tính realized PnL bằng thuật toán FIFO (First-In-First-Out). Mỗi fill được ghi WAL `TRADE_RECORD` 32 bytes.
-* **`fee_ledger.py` (254 dòng)**: Ghi nhận trade fees và funding payments. Phát hiện anomaly (fee > 1% notional → cảnh báo).
-* **`mark_to_market.py` (98 dòng)**: Theo dõi mark price real-time và tính unrealized PnL.
+* **`pnl_aggregator.py` (734 dòng)**: Root orchestrator — điều phối `RealizedPnLTracker`, `FeeLedger`, và `MarkToMarket`. Sở hữu WAL checkpoint protocol, authority reconciliation, và crash-forensics dump.
+* **`pnl_tracker.py` (389 dòng)**: Tính realized PnL bằng thuật toán FIFO (First-In-First-Out). Mỗi fill được ghi WAL `TRADE_RECORD` 32 bytes.
+* **`fee_ledger.py` (299 dòng)**: Ghi nhận trade fees và funding payments. Phát hiện anomaly (fee > 1% notional → cảnh báo).
+* **`mark_to_market.py` (120 dòng)**: Theo dõi mark price real-time và tính unrealized PnL.
 
 **Integer Arithmetic — Precision Contract:**
 
@@ -1252,7 +1258,7 @@ CheckpointB (type=70): txn_nonce(4B) + peak_equity(8B) + max_drawdown(8B) + tota
 
 **Authority Reconciliation** (★FIX-5): Cho phép exchange override PnL local — nhưng **CHỈ AN TOÀN khi `position.size == 0`**. Nếu vị thế đang mở, override bị **DEFERRED** với `DIVERGENCE_WARNING` để tránh equity corruption.
 
-#### Session Manager (`session_manager.py`) — 575 dòng
+#### Session Manager (`session_manager.py`) — 662 dòng
 
 **Trách nhiệm:** Đóng sổ phiên giao dịch hàng ngày — snapshot PnL aggregator, tính Sharpe ratio, ghi record vào NDJSON archive, reset session state. Đảm bảo idempotency: nếu rotation bị interrupt giữa chừng, không mất record và không duplicate.
 
@@ -1337,7 +1343,7 @@ def _read_last_line(self) -> str:
 
 **Truncate Corrupt Tail**: Nếu máy crash giữa lúc ghi NDJSON, dòng cuối có thể bị cắt ngang (partial JSON). Khi startup, `_truncate_corrupt_last_line()` phát hiện và loại bỏ dòng lỗi — chỉ mất tối đa 1 session record (acceptable loss so với corruption toàn file).
 
-#### Position Synchronizer (`position_sync.py`) — 383 dòng
+#### Position Synchronizer (`position_sync.py`) — 441 dòng
 
 PositionSynchronizer là lớp đối soát giúp kéo local state về gần thực tế trên sàn và phát hiện divergence sớm. Nó không nên được hiểu là bằng chứng rằng trạng thái local `luôn` khớp exchange trong mọi failure mode. Nó hoạt động theo 3 chế độ:
 
@@ -1349,7 +1355,7 @@ PositionSynchronizer là lớp đối soát giúp kéo local state về gần th
 
 **Kill-Switch Cooldown**: Trước khi trigger kill-switch, kiểm tra `ho_du_lieu/he_thong/system.KILLED` file mtime — nếu đã có kill trong `kill_cooldown_s` giây gần đây → suppress để tránh flapping.
 
-#### Funding Collector (`funding_collector.py`) — 234 dòng
+#### Funding Collector (`funding_collector.py`) — 266 dòng
 
 FundingCollector thu thập định kỳ các khoản thanh toán funding rate từ tất cả sàn giao dịch. Đặc biệt quan trọng: **Sign Normalization (★FIX-10)** — Binance/Bybit trả `positive = received` (đảo dấu so với Kairos), trong khi OKX trả `positive = paid` (giữ nguyên). Nếu không chuẩn hóa, PnL sẽ sai hoàn toàn.
 
@@ -1417,7 +1423,7 @@ Toàn bộ runtime parameters được hợp nhất vào 3 file YAML phẳng, ch
 
 **Trách nhiệm:** Cửa chặn cuối cùng trước khi order rời hệ thống. Quyền từ chối tuyệt đối bất kể Signal Engine và Portfolio Engine đã approve. Fail-fast: evaluate rules theo thứ tự chi phí tính toán tăng dần.
 
-**Hợp đồng hiệu năng:** `risk_gate.check()` hoàn thành trong **< 50µs** trên hot-path. File `risk_gate.py` — 557 dòng.
+**Hợp đồng hiệu năng:** `risk_gate.check()` hoàn thành trong **< 50µs** trên hot-path. File `risk_gate.py` — 646 dòng.
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/5f9c5cce-16f7-4580-920c-394daa564500" />
 
@@ -1643,7 +1649,7 @@ def _clock_ns(clock_id: int) -> int:
 
 ### 3.9. Giám Sát & Kiểm Thử (Monitoring & Testing)
 
-#### Latency Tracker (`giam_sat/theo_doi_do_tre/tracker.py`) — 78 dòng
+#### Latency Tracker (`giam_sat/theo_doi_do_tre/tracker.py`) — 93 dòng
 
 Đo lường 4 phân đoạn độ trễ. Tất cả `record_*()` đều **O(1), zero-allocation**:
 
@@ -1710,7 +1716,7 @@ def swap(self) -> "HdrHistogram":
     return self
 ```
 
-#### System Metrics Collector (`giam_sat/chi_so_hieu_suat/collector.py`) — 317 dòng
+#### System Metrics Collector (`giam_sat/chi_so_hieu_suat/collector.py`) — 382 dòng
 
 Hệ thống cần theo dõi RAM, CPU, và mức sử dụng GC liên tục. Nhưng các lệnh như lấy CPU (`psutil.cpu_percent()`) hay quét RAM (`tracemalloc.take_snapshot()`) là I/O-blocking — chúng có thể treo chương trình hàng chục mili-giây.
 
@@ -1972,28 +1978,28 @@ if _tv_mult < 1.0:                # DEGRADED: PTP crash
 | Metric | Giá trị |
 |--------|---------|
 | Tổng số module Python | 194 files (git-tracked) |
-| File lớn nhất | `vong_lap_su_kien.py` — 1105 dòng |
-| **Live Runner** | `live_runner.py` — 882 dòng (12-Step SRE Startup) |
-| Paper EMS Adapter | `paper_ems_adapter.py` — 711 dòng (19-Step Fill Pipeline) |
-| OMS OrderBook | `order_book.py` — 656 dòng |
-| PnL Aggregator | `pnl_aggregator.py` — 622 dòng |
-| Session Manager | `session_manager.py` — 575 dòng |
-| File quan trọng nhất | `risk_gate.py` — 557 dòng, 6 rules |
-| Position Synchronizer | `position_sync.py` — 383 dòng |
-| Execution Wrapper | `execution_wrapper.py` — 380 dòng |
-| Feature Engine | `incremental_engine.py` — 353 dòng |
-| Reconciler | `reconciler.py` — 346 dòng |
-| PnL Tracker | `pnl_tracker.py` — 323 dòng |
-| Feature Store | `memory_store.py` — 291 dòng |
-| Durable WAL | `durable_wal.py` — 290 dòng |
-| Fee Ledger | `fee_ledger.py` — 254 dòng |
-| Funding Collector | `funding_collector.py` — 234 dòng |
-| Circuit Breaker | `circuit_breaker.py` — 217 dòng |
-| Rate Limiter | `rate_limiter.py` — 212 dòng |
-| Retry Policy | `retry_policy.py` — 185 dòng |
-| Mark-to-Market | `mark_to_market.py` — 98 dòng |
-| OMS Serializer | `oms_serializer.py` — 112 dòng |
-| Latency Tracker | `tracker.py` — 78 dòng (tinh gọn) |
+| File lớn nhất | `vong_lap_su_kien.py` — 1251 dòng |
+| **Live Runner** | `live_runner.py` — 1038 dòng (12-Step SRE Startup) |
+| Paper EMS Adapter | `paper_ems_adapter.py` — 832 dòng (19-Step Fill Pipeline) |
+| OMS OrderBook | `order_book.py` — 763 dòng |
+| PnL Aggregator | `pnl_aggregator.py` — 734 dòng |
+| Session Manager | `session_manager.py` — 662 dòng |
+| File quan trọng nhất | `risk_gate.py` — 646 dòng, 6 rules |
+| Position Synchronizer | `position_sync.py` — 441 dòng |
+| Execution Wrapper | `execution_wrapper.py` — 435 dòng |
+| Feature Engine | `incremental_engine.py` — 422 dòng |
+| Reconciler | `reconciler.py` — 400 dòng |
+| PnL Tracker | `pnl_tracker.py` — 389 dòng |
+| Feature Store | `memory_store.py` — 342 dòng |
+| Durable WAL | `durable_wal.py` — 354 dòng |
+| Fee Ledger | `fee_ledger.py` — 299 dòng |
+| Funding Collector | `funding_collector.py` — 266 dòng |
+| Circuit Breaker | `circuit_breaker.py` — 261 dòng |
+| Rate Limiter | `rate_limiter.py` — 257 dòng |
+| Retry Policy | `retry_policy.py` — 221 dòng |
+| Mark-to-Market | `mark_to_market.py` — 120 dòng |
+| OMS Serializer | `oms_serializer.py` — 135 dòng |
+| Latency Tracker | `tracker.py` — 93 dòng (tinh gọn) |
 | **Test: Live Runner** | `test_live_runner.py` — 966 dòng, 74 tests, 14 components |
 | Test: Execution | `test_execution_pipeline.py` — 534 dòng, 40 tests |
 | Test: Chaos Risk | `test_chaos_risk.py` — 441 dòng, 24 tests |
