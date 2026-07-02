@@ -1,8 +1,8 @@
-# KAIROS v3 — Mục Tiêu Hệ Thống
+# KAIROS v3.8 — Mục Tiêu Hệ Thống
 
-**Phiên bản:** 1.0  
-**Ngày:** 2026-05-24  
-**Trạng thái:** Draft — Nội bộ
+**Phiên bản:** 1.5  
+**Ngày:** 2026-07-01  
+**Trạng thái:** Tài liệu tham khảo — Tổng quan công khai *(các tham số vận hành/vốn cụ thể đã được lược bỏ)*
 
 ---
 
@@ -41,10 +41,10 @@ KAIROS không phải hệ thống HFT. Mục tiêu là alpha từ edge về **d�
 ### 2.3 Phạm Vi Hoạt Động
 - **Sàn giao dịch:** Binance Futures, Bybit, OKX
 - **Công cụ:** Crypto perpetual futures (USDT-margined)
-- **Số symbols đồng thời:** 5–15 (tối đa 30 khi scale)
-- **Order size:** $50–$5,000 USDT per order
-- **Capacity mục tiêu mỗi alpha:** $500K–$2M (research viability tối thiểu $100K — M-R4 T1.4; binding gate L2 depth thực — M-R5 T2.6)
-- **Leverage:** 1x–5x (mặc định 1x, tùy symbol config)
+- **Số symbols đồng thời:** một rổ nhỏ, mở rộng dần khi scale
+- **Order size:** *(giá trị vốn/lệnh cụ thể — nội bộ, đã lược bỏ)*
+- **Capacity mục tiêu mỗi alpha:** *(quy mô vốn cụ thể — nội bộ, đã lược bỏ; ràng buộc bằng L2 depth thực — M-R4 T1.4 / M-R5 T2.6)*
+- **Leverage:** thấp, mặc định 1x (tùy symbol config)
 
 ---
 
@@ -122,30 +122,41 @@ Nếu bất kỳ check nào fail → abort startup, không trade.
 5. Notify watchdog dừng monitoring
 6. Exit clean
 
-### 4.3 Khôi Phục Sau Sự Cố
-| Loại Sự Cố | Hành Động | SLA Khôi Phục |
-|------------|-----------|---------------|
-| Process crash (unexpected) | Auto-restart qua supervisor | < 2 phút |
-| WAL corruption | Halt + manual review | N/A (không auto-recover) |
-| Exchange disconnection | Auto-reconnect với exponential backoff + jitter | < 30s |
-| Position divergence confirmed | force_override_state() + alert | < reconciliation_interval |
-| Kill switch triggered | Flatten tất cả positions, halt | < 5 phút |
+### 4.3 Khôi Phục Sau Sự Cố & Kế Hoạch Xử Lý Thảm Họa (Disaster Recovery)
+
+Hệ thống tuân thủ quy chuẩn xử lý sự cố fail-safe nghiêm ngặt dưới sự giám sát độc lập của Watchdog và quy trình khởi động 12 bước của Live Runner.
+
+| Loại Sự Cố / Thảm Họa | Hành Động Phục Hồi | SLA Khôi Phục |
+|-----------------------|--------------------|--------------|
+| **Tiến trình chính bị sập (Process Crash)** | Trình quản lý tiến trình (supervisor/systemd) tự động khởi động lại, kích hoạt chuỗi 12 bước SRE-grade check (xác minh cờ system.KILLED, đối soát ví và lệnh). | < 2 phút |
+| **Hỏng Nhật ký WAL (WAL Corruption)** | Dừng hệ thống lập tức (Halt). Yêu cầu kỹ sư can thiệp thủ công quét CRC32 của WAL, xác định điểm corrupt, và cắt bỏ (truncate) phần đuôi hỏng. Không tự phục hồi tự động để tránh sai lệch trạng thái. | N/A (Manual Review) |
+| **Mất kết nối Sàn (Exchange Disconnection)** | Đóng băng toàn bộ hoạt động đặt lệnh mới. Tự động kết nối lại WebSocket/REST bằng thuật toán Exponential Backoff với Jitter ngẫu nhiên. | < 30s |
+| **Bất đồng bộ Vị thế (Position Divergence > $10)** | Phát hiện bởi chu kỳ đối soát 120s. Đánh dấu trạng thái giảm vị thế (reduce-only), gửi cảnh báo CRITICAL Telegram. Tự động sửa chữa thông qua hàm `force_override_state()`. | < 120s |
+| **Mất đồng bộ thời gian (Clock Skew > 1ms)** | `time_validator.py` đọc CLOCK_REALTIME mức thấp phát hiện skew vượt ngưỡng -> đặt `capital_multiplier = 0.0` ngay lập tức để chặn Risk Gate đặt lệnh mới. | < 1ms (Tức thời) |
+| **Nghẽn mạng mạng diện rộng (Network Partition)** | Watchdog phát hiện mất kết nối kép (Dual Miss) -> ghi cờ `system.KILLED` ở 0ms -> gọi khẩn cấp `emergency_flattener.py` qua connection pool REST biệt lập để hủy toàn bộ lệnh và đóng MARKET các vị thế mở. | < 5s |
+| **Sàn giao dịch đóng băng rút tiền / sập (Solvency Run)** | RG-17 phát hiện tỷ lệ rút tiền lỗi liên tiếp >= 3 lần VÀ giá token sàn giảm > 30% so với BTC -> Gửi cảnh báo CRITICAL -> Tạm dừng mọi vị thế và khóa giao dịch. | < 10s |
 
 ---
 
-## 5. Mục Tiêu Rủi Ro
+## 5. Mục Tiêu Rủi Ro & Cơ Chế Kiểm Soát
 
-### 5.1 Hard Limits (Không Thể Override)
-| Tham Số | Giới Hạn |
-|---------|----------|
-| Max single position size (per symbol) | 20% portfolio (M-L5 RG-3) |
-| Max gross leverage | 200% equity = 2.0× (M-L5 RG-2, M-L4) |
-| Max daily loss | 3% equity → RG-4 halt |
-| Max weekly loss | 10% equity → RG-4 halt |
-| Max drawdown từ peak (auto-halt) | 15% equity → RG-4 halt |
-| Max drawdown từ peak (emergency flatten) | 20% equity → watchdog kill |
-| Max orders/phút (burst) | 60 |
-| Max orders/giờ (sustained avg ≤ 10/phút) | 600 |
+### 5.1 Hard Limits (Kiểm soát cứng bởi Pre-trade Risk Gate RG-1 đến RG-17)
+
+Toàn bộ các quy tắc kiểm soát rủi ro pre-trade được thực thi trong `risk_gate.py` dưới dạng các cửa chặn logic có độ trễ cực thấp (< 50µs) và cấm override ở runtime:
+
+| Quy Tắc | Mô Tả & Giới Hạn Cứng | Mã Spec |
+|---------|-----------------------|---------|
+| **Hạn mức Lệnh (Order Rate Burst)** | Tối đa 60 lệnh mỗi phút (burst) và 600 lệnh mỗi giờ (sustained avg ≤ 10/phút). | RG-1 |
+| **Đòn bẩy gộp tối đa (Gross Leverage)** | Tổng đòn bẩy gộp (gross leverage) không vượt quá 200% Equity (2.0x). | RG-2 |
+| **Tỷ trọng Vị thế Đơn lẻ (Max Exposure)** | Vị thế tối đa cho một symbol đơn lẻ không vượt quá 20% Net Asset Value (NAV). | RG-3 |
+| **Giới hạn Thua lỗ Ngày (Daily Loss Limit)** | Thua lỗ thực tế + unrealized PnL ngày vượt quá 3.0% Equity -> Halt giao dịch ngày đó. | RG-4 |
+| **Giới hạn Thua lỗ Tuần (Weekly Loss Limit)** | Thua lỗ thực tế + unrealized PnL tuần vượt quá 10.0% Equity -> Halt giao dịch. | RG-4 |
+| **Ngưỡng Drawdown Dừng (Auto-Halt Drawdown)** | Drawdown từ đỉnh tài sản (peak equity) đạt 15.0% -> Halt giao dịch, hủy lệnh. | RG-4 |
+| **Ngưỡng Drawdown Khẩn Cấp (Emergency Drawdown)** | Drawdown từ đỉnh tài sản đạt 20.0% -> Watchdog kích hoạt xả khẩn cấp toàn bộ vị thế. | RG-4 |
+| **Giám sát Stale State (Stale Guard)** | Cấm đặt lệnh nếu trạng thái Risk Gate cũ quá 500ms hoặc thời gian cập nhật bằng 0. | RG-12 |
+| **Công tắc Dead-Man Switch** | Tự động hủy lệnh nếu mất kết nối luồng chính quá 120s, giảm 50% vị thế ở 300s, flatten ở 600s. | RG-15 |
+| **Giám sát ADL Rank (Auto-Deleveraging)** | Tự động hạ vị thế nếu tài khoản lọt vào top 10% ADL queue của sàn. | RG-16 |
+| **Giám sát Khả năng Thanh khoản Sàn** | Halt giao dịch sàn nếu phát hiện lỗi rút tiền kép hoặc depeg token sàn (>30% vs BTC). | RG-17 |
 
 ### 5.2 Soft Limits (Alert + Review)
 | Tham Số | Ngưỡng |
@@ -168,17 +179,17 @@ Nếu bất kỳ check nào fail → abort startup, không trade.
 ### 6.1 Trước Khi Live (P0 — BLOCKER)
 Những vấn đề sau phải được fix trước khi bất kỳ live trading nào:
 
-1. **CR-01** — Ring buffer SPSC version protocol: sửa để system thực sự xử lý signals
-2. **CR-02** — WAL auto-rotation: implement trigger để WAL không bao giờ full trong runtime
-3. **CR-03** — RiskGate sync_state(): wire `ReconciliationAgent` vào live flow hoặc call `sync_state()` từ startup và định kỳ
+1. [x] **CR-01** — Ring buffer SPSC version protocol: sửa để system thực sự xử lý signals (ĐÃ FIX)
+2. [x] **CR-02** — WAL auto-rotation: implement trigger để WAL không bao giờ full trong runtime (ĐÃ FIX)
+3. [x] **CR-03** — RiskGate sync_state(): wire `ReconciliationAgent` vào live flow hoặc call `sync_state()` từ startup và định kỳ (ĐÃ FIX)
 
 ### 6.2 Trong Vòng 30 Ngày (P1)
-- HR-01: Implement `get_pressure()` và `submit_reconciliation_task()` trên ExecutionGateway
-- HR-02: Fix OrderBook dict iteration race (per-symbol index hoặc global reader lock)
-- HR-03: Fix RiskGate `_pending_by_sym` race (asyncio.Lock)
-- HR-04: Fix Emergency Kill NOBLOCK drop — write `system.KILLED` từ `_publish_emergency_kill()` trong gateway (hiện chỉ được written bởi `safe_hard_kill()` trong live_runner; nếu NOBLOCK send bị drop khi SNDHWM đầy, không có fallback durability)
-- HR-05: Fix OrderPool leak khi WAL full
-- HR-06: Implement startup cross-validation giữa DurableWAL và KairosState JSONL WAL — detect divergence khi restart trước khi trade (full unified WAL architecture là P2; đây là detection safeguard cho P1)
+- [x] HR-01: Implement `get_pressure()` và `submit_reconciliation_task()` trên ExecutionGateway (ĐÃ FIX)
+- [x] HR-02: Fix OrderBook dict iteration race (per-symbol index hoặc global reader lock) (ĐÃ FIX - Lỗ hổng 1)
+- [x] HR-03: Fix RiskGate `_pending_by_sym` race (ĐÃ FIX - Bảo vệ bởi threading.Lock)
+- [x] HR-04: Fix Emergency Kill NOBLOCK drop — write `system.KILLED` từ `_publish_emergency_kill()` trong gateway (ĐÃ FIX - Lỗ hổng 3)
+- [x] HR-05: Fix OrderPool leak khi WAL full (ĐÃ FIX)
+- [x] HR-06: Implement startup cross-validation giữa DurableWAL và KairosState JSONL WAL — detect divergence khi restart trước khi trade (ĐÃ FIX)
 
 ### 6.3 Trong Vòng 90 Ngày (P2)
 - Unified WAL architecture (Theme 2 trong audit report)
@@ -216,7 +227,7 @@ Hệ thống **KHÔNG thành công** nếu:
 
 Để tránh scope creep và duy trì tính ổn định:
 
-- **Không HFT:** Không market-making, không latency arbitrage, không co-location. Khi đủ vốn, HFT là project riêng biệt được fund bởi KAIROS profits — không phải một Phase upgrade của KAIROS.
+- **Không HFT:** Không market-making, không latency arbitrage, không co-location. Khi đủ vốn, HFT là project riêng biệt được fund bởi KAIROS profits — không phải một Phase upgrade của KAIROS. Ngoại lệ duy nhất (lưu data, không phải build): M-H1 "Nghĩa vụ mid-freq" — lưu raw L2 + trade stream + own-order lifecycle logs từ bây giờ, vì calibration data không thu lại retroactively được.
 - **Không trade dưới khung thời gian 30 phút:** Sub-30min = HFT territory. Minimum bar horizon = 30min (INV-STRATEGY.1). Giảm horizon không phải optimization — là scope creep sang project khác.
 - **Không manual override positions:** Tất cả positions phải được mở và đóng bởi thuật toán. Manual override chỉ qua emergency flatten.
 - **Không leverage cao:** Tối đa gross 2.0× (200% equity), mặc định 1x. KAIROS kiếm tiền từ alpha, không từ leverage.
