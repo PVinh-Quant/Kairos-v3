@@ -2,7 +2,7 @@
 
 **Phiên bản:** 1.5  
 **Ngày:** 2026-07-01  
-**Trạng thái:** Tài liệu tham khảo — Tổng quan công khai *(các tham số vận hành/vốn cụ thể đã được lược bỏ)*
+**Trạng thái:** Triển khai — Nội bộ
 
 ---
 
@@ -41,10 +41,10 @@ KAIROS không phải hệ thống HFT. Mục tiêu là alpha từ edge về **d�
 ### 2.3 Phạm Vi Hoạt Động
 - **Sàn giao dịch:** Binance Futures, Bybit, OKX
 - **Công cụ:** Crypto perpetual futures (USDT-margined)
-- **Số symbols đồng thời:** một rổ nhỏ, mở rộng dần khi scale
-- **Order size:** *(giá trị vốn/lệnh cụ thể — nội bộ, đã lược bỏ)*
-- **Capacity mục tiêu mỗi alpha:** *(quy mô vốn cụ thể — nội bộ, đã lược bỏ; ràng buộc bằng L2 depth thực — M-R4 T1.4 / M-R5 T2.6)*
-- **Leverage:** thấp, mặc định 1x (tùy symbol config)
+- **Số symbols đồng thời:** 5–15 (tối đa 30 khi scale)
+- **Order size:** $50–$5,000 USDT per order
+- **Capacity mục tiêu mỗi alpha:** $500K–$2M (research viability tối thiểu $100K — M-R4 T1.4; binding gate L2 depth thực — M-R5 T2.6)
+- **Leverage:** 1x–5x (mặc định 1x, tùy symbol config)
 
 ---
 
@@ -133,7 +133,7 @@ Hệ thống tuân thủ quy chuẩn xử lý sự cố fail-safe nghiêm ngặt
 | **Mất kết nối Sàn (Exchange Disconnection)** | Đóng băng toàn bộ hoạt động đặt lệnh mới. Tự động kết nối lại WebSocket/REST bằng thuật toán Exponential Backoff với Jitter ngẫu nhiên. | < 30s |
 | **Bất đồng bộ Vị thế (Position Divergence > $10)** | Phát hiện bởi chu kỳ đối soát 120s. Đánh dấu trạng thái giảm vị thế (reduce-only), gửi cảnh báo CRITICAL Telegram. Tự động sửa chữa thông qua hàm `force_override_state()`. | < 120s |
 | **Mất đồng bộ thời gian (Clock Skew > 1ms)** | `time_validator.py` đọc CLOCK_REALTIME mức thấp phát hiện skew vượt ngưỡng -> đặt `capital_multiplier = 0.0` ngay lập tức để chặn Risk Gate đặt lệnh mới. | < 1ms (Tức thời) |
-| **Nghẽn mạng mạng diện rộng (Network Partition)** | Watchdog phát hiện mất kết nối kép (Dual Miss) -> ghi cờ `system.KILLED` ở 0ms -> gọi khẩn cấp `emergency_flattener.py` qua connection pool REST biệt lập để hủy toàn bộ lệnh và đóng MARKET các vị thế mở. | < 5s |
+| **Nghẽn mạng mạng diện rộng (Network Partition)** | Watchdog phát hiện mất kết nối kép (Dual Miss) -> ghi cờ `system.KILLED` ở 0ms -> gọi khẩn cấp `emergency_flattener.py` qua connection pool REST biệt lập để hủy toàn bộ lệnh, đóng MARKET các vị thế mở, và ghi cờ `FLATTEN_LOCK` để chặn cứng Gateway & OrderBook đặt lệnh mới. | < 5s |
 | **Sàn giao dịch đóng băng rút tiền / sập (Solvency Run)** | RG-17 phát hiện tỷ lệ rút tiền lỗi liên tiếp >= 3 lần VÀ giá token sàn giảm > 30% so với BTC -> Gửi cảnh báo CRITICAL -> Tạm dừng mọi vị thế và khóa giao dịch. | < 10s |
 
 ---
@@ -142,7 +142,7 @@ Hệ thống tuân thủ quy chuẩn xử lý sự cố fail-safe nghiêm ngặt
 
 ### 5.1 Hard Limits (Kiểm soát cứng bởi Pre-trade Risk Gate RG-1 đến RG-17)
 
-Toàn bộ các quy tắc kiểm soát rủi ro pre-trade được thực thi trong `risk_gate.py` dưới dạng các cửa chặn logic có độ trễ cực thấp (< 50µs) và cấm override ở runtime:
+Toàn bộ các quy tắc kiểm soát rủi ro pre-trade được thực thi trong [risk_gate.py](file:///d:/The%20V/Kairos-v3/quan_tri_rui_ro/kiem_tra_truoc_lenh/risk_gate.py) dưới dạng các cửa chặn logic có độ trễ cực thấp (< 50µs) và cấm override ở runtime:
 
 | Quy Tắc | Mô Tả & Giới Hạn Cứng | Mã Spec |
 |---------|-----------------------|---------|
