@@ -15,9 +15,9 @@
 |--------|---------|
 | Phiên bản tài liệu | v3.5 |
 | Ngày cập nhật | 2026-06-12 |
-| Trạng thái | In Development — Layer 1 built & patched; Layer 3 ~95%; Layer 2 spec audit lần 2 (2026-06-11): M-R1 mất source code (cần rebuild từ spec), 4 xung đột spec HIGH chờ resolve |
+| Trạng thái | In Development — Layer 1 built & patched; Layer 3 ~95% |
 | Phạm vi | Architecture specification & implementation reference cho KAIROS v3 |
-| Test coverage | 473 hàm test / 18 files trong `test/` (M-D0: 25, M-D1: 31, M-D2: 37, M-D3: 32, M-D4: 29, exits: 64, ...) + 149 Layer 2 spec test definitions |
+| Test coverage | 473 hàm test / 18 files trong `test/` (M-D0: 25, M-D1: 31, M-D2: 37, M-D3: 32, M-D4: 29, exits: 64, ...) |
 
 <div align="left">
  
@@ -32,12 +32,11 @@
   - [3.1. Cấu Hình & Môi Trường](#31--cấu-hình--môi-trường-config--runtime)
   - [3.2. Hồ Dữ Liệu](#32--hồ-dữ-liệu-data-lake)
   - [3.3. Động Cơ Dữ Liệu](#33--động-cơ-dữ-liệu-data-engine)
-  - [3.4. Phòng Nghiên Cứu](#34--phòng-nghiên-cứu--kiểm-thử-research--replay-wip)
-  - [3.5. Trí Tuệ Nhân Tạo](#35--trí-tuệ-nhân-tạo--mlops-machine-learning-wip)
-  - [3.6. Thực Thi Chiến Dịch](#36--thực-thi-chiến-dịch-execution-core)
-  - [3.7. Lưới Bảo Vệ](#37--lưới-bảo-vệ-risk-system)
-  - [3.8. Hạ Tầng & Giao Tiếp](#38--hạ-tầng--giao-tiếp-infrastructure)
-  - [3.9. Giám Sát & Kiểm Thử](#39--giám-sát--kiểm-thử-monitoring--testing)
+  - [3.4. Trí Tuệ Nhân Tạo](#34--trí-tuệ-nhân-tạo--mlops-machine-learning-wip)
+  - [3.5. Thực Thi Chiến Dịch](#35--thực-thi-chiến-dịch-execution-core)
+  - [3.6. Lưới Bảo Vệ](#36--lưới-bảo-vệ-risk-system)
+  - [3.7. Hạ Tầng & Giao Tiếp](#37--hạ-tầng--giao-tiếp-infrastructure)
+  - [3.8. Giám Sát & Kiểm Thử](#38--giám-sát--kiểm-thử-monitoring--testing)
 - [4. Ràng Buộc & Quyết Định Thiết Kế (Design Constraints)](#4--ràng-buộc--quyết-định-thiết-kế-design-constraints--engineering-decisions)
 - [8. Kiểm Tra Sẵn Sàng Production (Production Readiness Checklist)](#8--kiểm-tra-sẵn-sàng-production-production-readiness-checklist)
 
@@ -137,7 +136,7 @@ KAIROS v3/
 ├── requirements.txt                    # Quản lý thư viện Python
 ├── README.md                           # Bạn đang đọc file này
 ├── docs/                               # implementation_plan.md, data_flow_diagrams.md, muc_tieu_he_thong.md
-├── prompt/                             # Spec modules: layer1_data (M-D), layer2_research (M-R), layer3_live (M-L), layer4_hft (M-H)
+├── prompt/                             # Spec modules: layer1_data (M-D), layer3_live (M-L), layer4_hft (M-H)
 │
 # ==========================================
 # 1. CẤU HÌNH & MÔI TRƯỜNG (CONFIG & RUNTIME)
@@ -148,7 +147,6 @@ KAIROS v3/
 │   ├── universe.yaml                   # Exchange adapters (timeout, rate) + Symbol master
 │   ├── trading.yaml                    # Risk, OMS, PnL, Position Sync, Session, Strategy
 │   ├── infra.yaml                      # Flow Control, Execution Protection, Alerting, Observability
-│   ├── research.yaml                   # [Layer 2] Tham số research pipeline (T0/T1/T2, cost model)
 │   ├── exchange_metadata.yaml          # Settlement times, funding intervals per exchange
 │   ├── sector_map.yaml                 # [M-D3] Sector assignments seed
 │   └── stablecoin_exclusion.yaml       # [M-D3] Stablecoin exclusion list cho universe
@@ -260,26 +258,11 @@ KAIROS v3/
 │           └── incremental_engine.py   # IncrementalFeatureEngine
 │
 # ==========================================
-# 4. PHÒNG NGHIÊN CỨU (RESEARCH & REPLAY)
-# ==========================================
-├── nghien_cuu/
-│   ├── khung_alpha/                    # [M-D4] Alpha Research Framework (3 files)
-│   │   ├── feature_spec.py             # [M-D4] FeatureSpec dataclass, 12 entries, DAG validation
-│   │   └── feature_registry.py         # [M-D4] FEATURE_REGISTRY 12 fns, IncrementalFeatureEngine
-│   ├── so_tay_jupyter/                 # (Notebooks)
-│   ├── nha_may_alpha/                  # (Alpha Factory)
-│   ├── dong_co_phat_lai/               # (REPLAY ENGINE)
-│   ├── kiem_thu_qua_khu/               # (Backtest Engine)
-│   │   ├── ma_tran_sie_toc/            # (Vectorized) Polars
-│   │   └── mo_phong_su_kien/           # (Event-driven)
-│   └── danh_gia/                       # (Evaluation) Sharpe, MDD
-│
-# ==========================================
-# 5. TRÍ TUỆ NHÂN TẠO (MACHINE LEARNING)
+# 4. TRÍ TUỆ NHÂN TẠO (MACHINE LEARNING)
 # ==========================================
 ├── hoc_may/
 │   ├── mo_hinh/                        # (Models) LSTM, Transformer — [PLANNED, chưa tồn tại]
-│   ├── huan_luyen/                     # [M-R1] Script train model — [SOURCE MẤT 2026-06-11, rebuild từ spec]
+│   ├── huan_luyen/                     # Script train model
 │   ├── suy_luan/                       # ONNX/TensorRT Inference
 │   ├── to_hop_alpha/                   # (Alpha Combiner)
 │   └── giam_sat_mo_hinh/               # (ML MONITORING)
@@ -287,7 +270,7 @@ KAIROS v3/
 │       └── sai_lech_du_doan/           # Prediction Drift
 │
 # ==========================================
-# 6. THỰC THI CHIẾN DỊCH (EXECUTION CORE)
+# 5. THỰC THI CHIẾN DỊCH (EXECUTION CORE)
 # ==========================================
 ├── thuc_thi_lenh/
 │   ├── bo_nho_trang_thai/              # [PERSISTENCE BACKBONE / STATE STORE]
@@ -346,7 +329,7 @@ KAIROS v3/
 │   └── vong_lap_su_kien.py             # (Event Loop) — 1105 dòng, trái tim hệ thống
 │
 # ==========================================
-# 7. LƯỚI BẢO VỆ (RISK SYSTEM)
+# 6. LƯỚI BẢO VỆ (RISK SYSTEM)
 # ==========================================
 ├── quan_tri_rui_ro/
 │   ├── rui_ro_cheo_chien_luoc/         # Cross-Strategy Risk
@@ -370,7 +353,7 @@ KAIROS v3/
 │               └── war_grade_rest.py
 │
 # ==========================================
-# 8. HẠ TẦNG (INFRASTRUCTURE)
+# 7. HẠ TẦNG (INFRASTRUCTURE)
 # ==========================================
 ├── ha_tang/
 │   ├── bus_su_kien/                    # (Event Bus) ZeroMQ
@@ -392,7 +375,7 @@ KAIROS v3/
 │       └── time_validator.py           # PTP/NTP Clock Validation
 │
 # ==========================================
-# 9. GIÁM SÁT (MONITORING & TESTING)
+# 8. GIÁM SÁT (MONITORING & TESTING)
 # ==========================================
 ├── giam_sat/
 │   ├── chi_so_hieu_suat/               # System Metrics
@@ -431,7 +414,7 @@ KAIROS v3/
 │   └── test_session_pnl.py             # Session + PnL tests (20 tests)
 │
 # ==========================================
-# 10. KỊCH BẢN VẬN HÀNH (SCRIPTS)
+# 9. KỊCH BẢN VẬN HÀNH (SCRIPTS)
 # ==========================================
 └── kich_ban/
     ├── __init__.py                     # Package marker
@@ -472,8 +455,6 @@ KAIROS v3/
 | Position State | `thoat_vi_the/position_state.py` | 75 | Implemented | — |
 | Position Sizer | `thoat_vi_the/position_sizer.py` | 51 | Implemented | `test_position_sizer.py` (14 tests) |
 | Exit Strategies (×6) | `thoat_vi_the/strategies/` | 309 | Implemented | `test_strategies.py` (32 tests) |
-| **Layer 2 Research Spec** | `prompt/layer2_research/` (11 R modules) | spec | Spec complete (2026-06-03); audit lần 2 (2026-06-11): M-R1 mất source, 4 xung đột spec HIGH chờ resolve | 149 test defs |
-| Research / Replay Engine | `nghien_cuu/` | — | Build Phase 0–1 (spec ready) | — |
 | ML / ONNX Inference | `hoc_may/suy_luan/` | — | Build Phase 2 | — |
 | Stack Launchers | `kich_ban/` | 147 | Implemented | — |
 
@@ -718,9 +699,9 @@ Nightly batch chạy lúc 02:00 UTC, nhận raw bars từ M-D1 → phát hiện 
 **Output:** `ho_du_lieu/lich_su_vu_tru/{date}__{built_at}.parquet` (versioned immutable) + `manifest.json` (append-only)
 * **Tests:** 32 unit tests (`test/test_d3_pit_universe.py`) — T-D3.1 → T-D3.30
 
-#### M-D4: Feature Cache (`xu_ly_lo/` + `nghien_cuu/khung_alpha/` — 5 files)
+#### M-D4: Feature Cache (xu_ly_lo/ + khung_alpha/ — 5 files)
 
-Pre-compute và cache feature matrices cho research. Cache invalidated by feature logic hash khi logic thay đổi.
+Pre-compute và cache feature matrices. Cache invalidated by feature logic hash khi logic thay đổi.
 
 * `khung_alpha/feature_spec.py` — `FeatureSpec` frozen dataclass (11 fields); `FEATURE_SPECS` 12 entries (return_1h/4h, funding_raw/z, oi_1h/4h, volume_ratio, basis, btc_neutral_1h/4h, spread, book_pressure); DAG cycle validation tại import time (INV-D4.24)
 * `khung_alpha/feature_registry.py` — `FEATURE_REGISTRY` 12 module-level `FeatureFn`; Winsorize [1%,99%] rolling 90d cho return_1h/4h; 5×IQR outlier flag cho funding_raw + oi_change; Welford expanding z-score funding_z_30d (INV-D4.19); Rolling OLS 504 bars btc_neutral + BTC 20% coverage check (INV-D4.22); Phase 0 L2 features: `warm=True` ngay tại bar 1, return NaN (INV-D4.27); `IncrementalFeatureEngine` topo-sort + sync-emit + inject_context (INV-D4.28); `FeatureSpecRegistry` — M-D0 PIT Verifier bridge
@@ -857,59 +838,7 @@ def _run_plan(self, symbol_id, event_type_id, exchange_ts, receive_ts):
 
 ---
 
-### 3.4. Phòng Nghiên Cứu & Kiểm Thử — Layer 2 Research Core
-
-> **Status 2026-06-04:** Layer 2 spec đã hoàn thiện và audited (M-R1 → M-R11). Cross-audit Layer 1+2 phát hiện và fix **15 bugs** (3 critical, 7 significant, 5 minor) — xem chi tiết bên dưới. Sẵn sàng bắt đầu build Phase 0.
->
-> **Status 2026-06-11 (audit lần 2):** Source code M-R1 (`hoc_may/huan_luyen/`) bị mất — chỉ còn `.pyc`, cần rebuild từ spec. Phát hiện **4 xung đột spec mức HIGH** giữa M-R1/R3/R4/R5/R6/R9, cần resolve trước khi build tiếp Phase 0.
->
-> **Bug fixes 2026-06-04 (cross-layer audit):**
->
-> - **[CRITICAL]** K3 formula: `×10000` → `×1000` (per-mille) — gate T0 vô hiệu trước đây
-> - **[CRITICAL]** M-R2 Leakage Audit: 10 → 14 checks (thêm AUDIT-11/12/13/14)
-> - **[CRITICAL]** effective_n formula: `T×(1-ρ)²/halflife` → `T×(1-|ρ|)/(1+|ρ|)` (Cochrane 2001)
-> - **[HIGH]** M-D3 ADV: `bar_count` giờ loại cả `quality=4` (maintenance), không chỉ `quality=3`
-> - **[HIGH]** M-D4: winsorization contract — `compute_btc_neutral_*` không đọc pre-computed return từ bar
-> - **[HIGH]** cross-day funding blackout: bar 23:30 UTC phải check settlement ngày hôm sau
-> - **[HIGH]** M-R4 T1: nhận `t0_result` và tự invert signal nếu `signal_direction=-1`
-> - **[HIGH]** M-R2 AUDIT-9: None-guard cho `research_yaml_hash` Phase 0
-> - **[HIGH]** `risk_gate.py`: `ConfirmedState` constructor missing `unrealized_pnl=0.0` (unblocks test suite)
-> - **[MEDIUM]** M-R7: `settlement_hours` → parse từ key thực `settlement_times_utc` trong YAML
-
-**Layer 2 Research Pipeline (3-tier screening):**
-
-| Module | File | Phase | Mô tả |
-|--------|------|-------|-------|
-| **M-R1** | `hoc_may/huan_luyen/` | Phase 0 | Model Training — Ridge default, ExperimentRecord, PurgedKFold, DSR. **Source mất (2026-06-11) — rebuild từ spec** |
-| **M-R2** | `nghien_cuu/danh_gia/leakage_audit.py` | Phase 0 | Leakage Audit — 14 checks, hard gate trước T1 |
-| **M-R3** | `nghien_cuu/nha_may_alpha/t0_screen.py` | Phase 0 | T0 Screen — IC + cost, ≤15 min |
-| **M-R4** | `nghien_cuu/nha_may_alpha/t1_validate.py` | Phase 0 | T1 Validate — PurgedKFold + DSR + 9 checks |
-| **M-R5** | `nghien_cuu/nha_may_alpha/t2_diligence.py` | Phase 1 | T2 Full Diligence — 11 checks |
-| **M-R6** | `nghien_cuu/dong_co_phat_lai/vectorized_backtest.py` | Phase 0 | Polars vectorized backtest |
-| **M-R7** | `nghien_cuu/kiem_thu_qua_khu/ma_tran_sie_toc/` | Phase 0 | Cost Model — slippage + regime multiplier |
-| **M-R8** | `nghien_cuu/nha_may_alpha/factor_neutralizer.py` | Phase 1 | Factor Neutralization — joint BTC+ETH OLS |
-| **M-R9** | `nghien_cuu/nha_may_alpha/alpha_registry.py` | Phase 1 | Alpha Registry + Cemetery |
-| **M-R10** | `nghien_cuu/kham_pha_dac_trung/anomaly_miner.py` | Phase 1 (Tier B) | Anomaly Miner |
-| **M-R11** | `giam_sat/trang_thai_thi_truong/market_state_engine.py` | Phase 1 | Market State — 8-dim state vector |
-
-**Key design decisions (từ spec audit):**
-- T0→T1→T2: 3-tier gate, không skip. T0 kills 85–95%, T1 kills 60–80%.
-- ExperimentRecord: 23 fields, config_hash auto-computed, n_trials_total = unique config_hash per data_window
-- AlphaRecord: 34 fields, frozen=True, PAPER→SHADOW cần **6 điều kiện** (INV-R9.2)
-- LIVE→HIBERNATING: `btc_alt_corr > 0.8 AND alt_xs_dispersion thấp` — liquidity vacuum KHÔNG trigger HIBERNATE (chỉ scale down 50%)
-- M-R6 backtest: execution_price="open_next", taker_adv_sel = 2× maker (8 bps vs 4 bps)
-- T1.6 BTC+ETH: joint OLS (không sequential) — implement trực tiếp trong T1.6, không phụ thuộc M-R8 Phase 1
-
-Bất kỳ quỹ giao dịch định lượng nào cũng đối mặt với **Simulation-to-Reality Gap**. Kairos giải quyết bằng kiến trúc đồng nhất — cùng feature_registry.py cho cả batch research và live inference.
-
-* **Động cơ phát lại (`nghien_cuu/dong_co_phat_lai/`)** — M-R6 vectorized backtest (Polars-native, single file)
-* **Nhà máy Alpha (`nghien_cuu/nha_may_alpha/`)** — T0/T1/T2 + registry + cost model + factor neutral
-* **Kiểm thử quá khứ (`nghien_cuu/kiem_thu_qua_khu/`)** — vectorized (Polars) + event-driven (dành cho dự án HFT tương lai — tách riêng khỏi Kairos)
-* **Đánh giá (`nghien_cuu/danh_gia/`)** — leakage_audit, purged_kfold, dsr_calculator, walk_forward, stress_tester
-
----
-
-### 3.5. Trí Tuệ Nhân Tạo & MLOps (Machine Learning) `[WIP]`
+### 3.4. Trí Tuệ Nhân Tạo & MLOps (Machine Learning) [WIP]
 
 Bộ não của hệ thống. Trong khi các quy tắc rủi ro và thực thi lệnh được viết bằng code tĩnh, logic dự đoán giá được giao hoàn toàn cho các mô hình Machine Learning.
 
@@ -921,7 +850,7 @@ Bộ não của hệ thống. Trong khi các quy tắc rủi ro và thực thi l
 
 ---
 
-### 3.6. Thực Thi Chiến Dịch (Execution Core)
+### 3.5. Thực Thi Chiến Dịch (Execution Core)
 
 **Trách nhiệm:** Nhận `SignalEvent` từ ZMQ bus, qua 7 pre-trade gates, đẩy vào SPSC ring buffer, worker sizing lệnh và submit qua EMS. File chính `vong_lap_su_kien.py` — 1105 dòng.
 
@@ -1408,7 +1337,7 @@ Toàn bộ runtime parameters được hợp nhất vào 3 file YAML phẳng, ch
 
 ---
 
-### 3.7. Lưới Bảo Vệ (Risk System)
+### 3.6. Lưới Bảo Vệ (Risk System)
 
 **Trách nhiệm:** Cửa chặn cuối cùng trước khi order rời hệ thống. Quyền từ chối tuyệt đối bất kể Signal Engine và Portfolio Engine đã approve. Fail-fast: evaluate rules theo thứ tự chi phí tính toán tăng dần.
 
@@ -1479,7 +1408,7 @@ Watchdog chỉ trigger khi **CẢ HAI** kênh miss ≥ threshold liên tiếp �
 
 ---
 
-### 3.8. Hạ Tầng & Giao Tiếp (Infrastructure)
+### 3.7. Hạ Tầng & Giao Tiếp (Infrastructure)
 
 Cấu trúc xương sống kết nối các module rời rạc thành một thể thống nhất.
 
@@ -1634,7 +1563,7 @@ def _clock_ns(clock_id: int) -> int:
 
 ---
 
-### 3.9. Giám Sát & Kiểm Thử (Monitoring & Testing)
+### 3.8. Giám Sát & Kiểm Thử (Monitoring & Testing)
 
 #### Latency Tracker (`giam_sat/theo_doi_do_tre/tracker.py`) — 78 dòng
 
