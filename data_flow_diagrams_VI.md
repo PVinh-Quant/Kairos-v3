@@ -1,3 +1,5 @@
+> 📖 **[English Version](data_flow_diagrams.md)**
+
 # KAIROS v3.2 — Sơ đồ luồng dữ liệu & Workflow (Production & Live Core)
 
 > **Ký hiệu:** ✅ = đã có | ❌ = cần build | 🔗 = tái dùng module có sẵn | **[DEFER]** = không cần cho first release

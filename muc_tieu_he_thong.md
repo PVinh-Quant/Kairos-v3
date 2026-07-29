@@ -1,3 +1,5 @@
+> 📖 **[English Version](system_objectives.md)**
+
 # KAIROS v3.8 — Mục Tiêu Hệ Thống
 
 **Phiên bản:** 1.5  

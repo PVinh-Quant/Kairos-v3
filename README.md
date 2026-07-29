@@ -2,8 +2,11 @@
  
 <img width="124" height="124" alt="image" src="https://github.com/user-attachments/assets/bf450abd-f468-43fa-9750-464e3ef95651" />
 
+[![English](https://img.shields.io/badge/lang-English-blue?style=flat-square)](#)
+[![Tiếng Việt](https://img.shields.io/badge/lang-Tiếng_Việt-red?style=flat-square)](README_VI.md)
+
 # KAIROS v3.2
-### **Hệ thống giao dịch định lượng (Quant Trading) tần suất trung bình (Mid-Frequency) tự động hóa toàn diện, với kiến trúc độ trễ thấp (Low-Latency)**
+### **A Fully Automated Mid-Frequency Quantitative Trading System with Low-Latency Architecture**
 
 [![Python](https://img.shields.io/badge/Python-3.13+-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 [![Market](https://img.shields.io/badge/Market-Crypto-orange?style=for-the-badge)](https://www.binance.com/)
@@ -11,90 +14,90 @@
 
 `Python` • `ETL Pipeline` • `Backtesting` • `Quant Analysis`
 
-| Trường | Giá trị |
-|--------|---------|
-| Phiên bản tài liệu | v3.5 |
-| Ngày cập nhật | 2026-06-12 |
-| Trạng thái | In Development — Layer 1 built & patched; Layer 3 ~95% |
-| Phạm vi | Architecture specification & implementation reference cho KAIROS v3 |
-| Test coverage | 473 hàm test / 18 files trong `test/` (M-D0: 25, M-D1: 31, M-D2: 37, M-D3: 32, M-D4: 29, exits: 64, ...) |
+| Field | Value |
+|-------|-------|
+| Document Version | v3.5 |
+| Last Updated | 2026-06-12 |
+| Status | In Development — Layer 1 built & patched; Layer 3 ~95% |
+| Scope | Architecture specification & implementation reference for KAIROS v3 |
+| Test Coverage | 473 test functions / 18 files in `test/` (M-D0: 25, M-D1: 31, M-D2: 37, M-D3: 32, M-D4: 29, exits: 64, ...) |
 
 <div align="left">
  
 ---
 
-## Mục Lục
+## Table of Contents
 
-- [0. Đọc Trước Khi Tham Khảo](#read-this-first)
-- [1. Luồng Dữ Liệu Thực Chiến (Data Flow)](#1--luồng-dữ-liệu-thực-chiến-data-flow)
-- [2. Kiến Trúc Hệ Thống (Directory Map)](#2--kiến-trúc-hệ-thống-directory-map)
-- [3. Đặc Tả Module (Module Specifications)](#3--đặc-tả-module-module-specifications)
-  - [3.1. Cấu Hình & Môi Trường](#31--cấu-hình--môi-trường-config--runtime)
-  - [3.2. Hồ Dữ Liệu](#32--hồ-dữ-liệu-data-lake)
-  - [3.3. Động Cơ Dữ Liệu](#33--động-cơ-dữ-liệu-data-engine)
-  - [3.4. Trí Tuệ Nhân Tạo](#34--trí-tuệ-nhân-tạo--mlops-machine-learning-wip)
-  - [3.5. Thực Thi Chiến Dịch](#35--thực-thi-chiến-dịch-execution-core)
-  - [3.6. Lưới Bảo Vệ](#36--lưới-bảo-vệ-risk-system)
-  - [3.7. Hạ Tầng & Giao Tiếp](#37--hạ-tầng--giao-tiếp-infrastructure)
-  - [3.8. Giám Sát & Kiểm Thử](#38--giám-sát--kiểm-thử-monitoring--testing)
-- [4. Ràng Buộc & Quyết Định Thiết Kế (Design Constraints)](#4--ràng-buộc--quyết-định-thiết-kế-design-constraints--engineering-decisions)
-- [8. Kiểm Tra Sẵn Sàng Production (Production Readiness Checklist)](#8--kiểm-tra-sẵn-sàng-production-production-readiness-checklist)
+- [0. Read This First](#read-this-first)
+- [1. Production Data Flow](#1--production-data-flow)
+- [2. System Architecture (Directory Map)](#2--system-architecture-directory-map)
+- [3. Module Specifications](#3--module-specifications)
+  - [3.1. Configuration & Runtime](#31--configuration--runtime)
+  - [3.2. Data Lake](#32--data-lake)
+  - [3.3. Data Engine](#33--data-engine)
+  - [3.4. Machine Learning & MLOps](#34--machine-learning--mlops-wip)
+  - [3.5. Execution Core](#35--execution-core)
+  - [3.6. Risk System](#36--risk-system)
+  - [3.7. Infrastructure & Communication](#37--infrastructure--communication)
+  - [3.8. Monitoring & Testing](#38--monitoring--testing)
+- [4. Design Constraints & Engineering Decisions](#4--design-constraints--engineering-decisions)
+- [8. Production Readiness Checklist](#8--production-readiness-checklist)
 
 ---
 
 <a id="read-this-first"></a>
-## 0. Đọc Trước Khi Tham Khảo
+## 0. Read This First
 
-Kairos là một engine giao dịch tần suất trung bình (`mid-frequency`) với kiến trúc tối ưu rất mạnh cho độ trễ thấp. README này không nên được hiểu là xác nhận hệ thống đã đạt `formal correctness` cho real-money trading trong mọi failure mode. Ở nhiều điểm, thiết kế hiện tại ưu tiên `latency-first`, nên người tham khảo cần đọc rõ các giả định và ranh giới an toàn trước khi tái sử dụng.
+Kairos is a mid-frequency trading engine with an architecture heavily optimized for low latency. This README should not be interpreted as confirmation that the system has achieved formal correctness for real-money trading across all failure modes. At many points, the current design prioritizes a latency-first approach; therefore, readers should carefully understand the assumptions and safety boundaries before reusing any components.
 
-**Cần hiểu đúng các khái niệm sau:**
+**Key concepts that must be understood correctly:**
 
-- `Snapshot + WAL` hiện nên được hiểu là **persistence backbone / operational truth source** cho state trọng yếu. Chỉ nên gọi là `Single Source of Truth` tuyệt đối khi mọi mutation đều bắt buộc đi qua WAL và replay luôn rebuild ra cùng logical state.
-- `Drop`, `coalescing`, `backpressure shedding`, và `fail-fast` là quyết định hiệu năng; chúng không mặc định an toàn cho real trading nếu event bị bỏ có thể làm sai quyết định hoặc làm lệch state. Khi đó phải có `gap detection`, `degraded mode`, hoặc `halt`.
-- `Deterministic replay` chỉ có nghĩa khi input stream, ordering, seed, timestamp semantics, và side effects external đều được kiểm soát. Paper determinism không đồng nghĩa live determinism.
-- `SPSC ring buffer`, `OCC retries`, và mô hình `thread + asyncio` đều dựa trên assumption chặt. Nếu assumption không được runtime-enforce hoặc stress-test, correctness có thể sai dù latency vẫn đẹp.
-- `Integer-scaled arithmetic` chỉ giải quyết sai số `float`; nó không tự động giải quyết `currency normalization`, `funding sign conventions`, `fee model`, hay sự khác biệt giữa linear / inverse / coin-margined products.
+- `Snapshot + WAL` should currently be understood as a **persistence backbone / operational truth source** for critical state. It should only be called a `Single Source of Truth` in the absolute sense when every mutation is required to pass through the WAL and replay always rebuilds to the same logical state.
+- `Drop`, `coalescing`, `backpressure shedding`, and `fail-fast` are performance trade-offs; they are not inherently safe for real trading if dropped events could cause incorrect decisions or state divergence. In such cases, `gap detection`, `degraded mode`, or `halt` must be in place.
+- `Deterministic replay` is only meaningful when the input stream, ordering, seed, timestamp semantics, and external side effects are all under control. Paper determinism does not equate to live determinism.
+- `SPSC ring buffer`, `OCC retries`, and the `thread + asyncio` model all rely on strict assumptions. If these assumptions are not runtime-enforced or stress-tested, correctness may be violated even when latency metrics look good.
+- `Integer-scaled arithmetic` only addresses `float` precision errors; it does not automatically handle `currency normalization`, `funding sign conventions`, `fee models`, or the differences between linear / inverse / coin-margined products.
 
-**Production gate tối thiểu trước khi dùng làm tài liệu tham khảo cho engine tiền thật:**
+**Minimum production gates before using this as a reference for a real-money engine:**
 
-| Nhóm | Yêu cầu tối thiểu |
-|------|-------------------|
-| Event correctness | `sequence_id`, tách `event_time` / `ingest_time`, gap detection, policy rõ cho out-of-order và drop |
-| Persistence | mọi mutation state đi qua WAL, snapshot + replay rebuild ra cùng logical state |
-| Determinism | cùng input -> cùng output ở mức logic, không phụ thuộc thread scheduling hay `time.time()` |
-| Concurrency | ownership rõ hoặc lock strategy rõ; OCC chỉ áp cho operation idempotent và retry-safe |
-| Risk stop | global kill switch atomic, engine state machine `INIT -> SYNC -> RUNNING -> HALT` rõ ràng |
-| Accounting | base-currency normalization, funding/fee normalization, reconciliation với exchange |
-| Integrity | invariant runtime checks cho order, position, balance, PnL |
-| Testing | replay, chaos, fault injection, restart recovery, race stress, invariant assertions |
+| Category | Minimum Requirements |
+|----------|---------------------|
+| Event correctness | `sequence_id`, separation of `event_time` / `ingest_time`, gap detection, explicit policy for out-of-order and drops |
+| Persistence | Every state mutation passes through WAL, snapshot + replay rebuilds to the same logical state |
+| Determinism | Same input → same output at the logical level, independent of thread scheduling or `time.time()` |
+| Concurrency | Clear ownership or explicit lock strategy; OCC only applied to idempotent, retry-safe operations |
+| Risk stop | Atomic global kill switch, explicit engine state machine `INIT -> SYNC -> RUNNING -> HALT` |
+| Accounting | Base-currency normalization, funding/fee normalization, reconciliation with exchange |
+| Integrity | Runtime invariant checks for orders, positions, balances, PnL |
+| Testing | Replay, chaos, fault injection, restart recovery, race stress, invariant assertions |
 
-**Cách nên đọc phần còn lại của README:**
+**How to read the rest of this README:**
 
-- Phần bên dưới mô tả chủ yếu là `kiến trúc`, `ý đồ thiết kế`, và `hướng hardening`.
-- Những từ như `SSOT`, `deterministic`, `crash-safe`, `lock-free`, hay `production` nên được hiểu là có điều kiện, không phải bảo chứng vô điều kiện cho mọi đường chạy.
-- Nếu bạn muốn dùng Kairos làm reference cho hệ thống thật, hãy kiểm tra kỹ: event sequencing, WAL coverage, idempotency, state machine, invariant enforcement, exchange reconciliation, và kill consistency.
+- The sections below primarily describe the `architecture`, `design intent`, and `hardening roadmap`.
+- Terms such as `SSOT`, `deterministic`, `crash-safe`, `lock-free`, or `production` should be understood as conditional, not unconditional guarantees across all execution paths.
+- If you want to use Kairos as a reference for a live system, verify thoroughly: event sequencing, WAL coverage, idempotency, state machine, invariant enforcement, exchange reconciliation, and kill consistency.
 
 ---
 
-## 1. Luồng Dữ Liệu Thực Chiến (Data Flow)
+## 1. Production Data Flow
 
-Mục tiêu thiết kế là không để state trọng yếu nằm rải rác. Trong README này, `Snapshot + WAL` nên được hiểu là **persistence backbone** và nguồn tham chiếu vận hành cho state quan trọng, không phải tuyên bố rằng mọi mutation đã được formalize thành `Single Source of Truth` tuyệt đối trên mọi đường chạy.
+The design goal is to prevent critical state from being scattered across components. In this README, `Snapshot + WAL` should be understood as the **persistence backbone** and operational reference source for critical state, not as a claim that every mutation has been formalized as an absolute `Single Source of Truth` across all execution paths.
 
 ```mermaid
 graph TD
-    %% Định nghĩa các node
-    EX[Sàn Giao Dịch]
-    MD[Động Cơ Dữ Liệu]
+    %% Node definitions
+    EX[Exchange]
+    MD[Data Engine]
     BUS((Event Bus ZMQ + Backpressure))
     STATE[(Operational State Store<br/>Snapshot + WAL)]
     
     SIG[Signal Engine]
     PORT[Portfolio Engine + Accounting]
     RISK[Risk Engine \n Cross-Strategy]
-    OMS[OMS - Quản Lý Lệnh]
-    EMS[EMS - Động Cơ Thực Thi]
+    OMS[OMS - Order Management]
+    EMS[EMS - Execution Engine]
 
-    %% Luồng Dữ Liệu
+    %% Data Flow
     EX -- WebSocket Tick --> MD
     MD -- MarketEvent_v1 --> BUS
     
@@ -114,61 +117,61 @@ graph TD
     RISK -- ApprovedOrderEvent_v1 --> BUS
     
     BUS -.-> |Read Approved Order| EMS
-    EMS -- Xé lệnh Limit/Market + Circuit Breaker --> EX
+    EMS -- Slice into Limit/Market + Circuit Breaker --> EX
     
     EX -- FillEvent_v1 --> BUS
     BUS -.-> |Append WAL / refresh snapshot| STATE
 ```
 
-> Khi dùng cho production, mỗi event nên mang tối thiểu `sequence_id`, `event_time`, và `ingest_time`. Nếu có gap, out-of-order ngoài cửa sổ, hoặc drop trên luồng causal, hệ thống nên chuyển sang `degraded` hoặc `halt` thay vì giả định state vẫn đúng.
+> For production use, each event should carry at minimum `sequence_id`, `event_time`, and `ingest_time`. If a gap, out-of-order event beyond the accepted window, or drop on a causal stream is detected, the system should transition to `degraded` or `halt` rather than assuming state remains correct.
 
 ---
 
-## 2. Kiến Trúc Hệ Thống (Directory Map)
+## 2. System Architecture (Directory Map)
 
 ```text
 KAIROS v3/
-├── .env                                # Chứa API Keys, Passwords (KHÔNG commit)
+├── .env                                # API Keys, Passwords (NOT committed)
 ├── .gitignore
 ├── Dockerfile
-├── Makefile                            # Phím tắt thao tác (make train, make live)
-├── main.py                             # Entry point tổng
-├── requirements.txt                    # Quản lý thư viện Python
-├── README.md                           # Bạn đang đọc file này
-├── docs/                               # implementation_plan.md, data_flow_diagrams.md, muc_tieu_he_thong.md
-├── prompt/                             # Spec modules: layer1_data (M-D), layer3_live (M-L), layer4_hft (M-H)
+├── Makefile                            # Command shortcuts (make train, make live)
+├── main.py                             # Main entry point
+├── requirements.txt                    # Python dependency management
+├── README.md                           # You are reading this file
+├── docs/                               # implementation_plan.md, data_flow_diagrams.md, system_objectives.md
+├── prompt/                             # Module specs: layer1_data (M-D), layer3_live (M-L), layer4_hft (M-H)
 │
 # ==========================================
-# 1. CẤU HÌNH & MÔI TRƯỜNG (CONFIG & RUNTIME)
+# 1. CONFIGURATION & RUNTIME
 # ==========================================
-├── cau_hinh/
-│   ├── adapter_loader.py               # Factory nạp Exchange Adapters từ .env + universe.yaml
-│   ├── config_loader.py                # Pydantic typed loaders cho các file YAML
+├── cau_hinh/                           # (Config)
+│   ├── adapter_loader.py               # Factory for loading Exchange Adapters from .env + universe.yaml
+│   ├── config_loader.py                # Pydantic typed loaders for YAML files
 │   ├── universe.yaml                   # Exchange adapters (timeout, rate) + Symbol master
 │   ├── trading.yaml                    # Risk, OMS, PnL, Position Sync, Session, Strategy
 │   ├── infra.yaml                      # Flow Control, Execution Protection, Alerting, Observability
 │   ├── exchange_metadata.yaml          # Settlement times, funding intervals per exchange
 │   ├── sector_map.yaml                 # [M-D3] Sector assignments seed
-│   └── stablecoin_exclusion.yaml       # [M-D3] Stablecoin exclusion list cho universe
+│   └── stablecoin_exclusion.yaml       # [M-D3] Stablecoin exclusion list for universe
 │
-├── moi_truong_chay/                    # (RUNTIME ISOLATION) Tách biệt tuyệt đối
-│   ├── live/                           # [NEW] Chạy tiền thật — Live Orchestrator (production-oriented)
-│   │   ├── live_runner.py              # [NEW] 12-Step SRE Startup + Health/Reconcile Daemons (882 dòng)
+├── moi_truong_chay/                    # (Runtime Environments) Absolute isolation
+│   ├── live/                           # [NEW] Real-money trading — Live Orchestrator (production-oriented)
+│   │   ├── live_runner.py              # [NEW] 12-Step SRE Startup + Health/Reconcile Daemons (882 lines)
 │   │   └── live_config.yaml            # [NEW] SRE-grade tuning: health, reconciliation, cancel policy
-│   ├── paper/                          # Chạy tiền ảo (Testnet)
-│   │   ├── audit_to_parquet.py         # Chuyển đổi dữ liệu kiểm toán sang Parquet
-│   │   ├── microstructure_model.py     # Mô phỏng vi cấu trúc thị trường
-│   │   ├── paper_ems_adapter.py        # Adapter thực thi cho Paper Trading (711 dòng)
-│   │   ├── paper_runner.py             # Script chạy chính cho môi trường Paper
-│   │   ├── paper_state_manager.py      # Quản lý trạng thái lệnh ảo
-│   │   └── shock_simulator.py          # Giả lập các cú sốc thị trường
-│   ├── backtest/                       # Chạy giả lập quá khứ
-│   └── upstream_runner.py              # Script khởi chạy các tiến trình Data/Risk
+│   ├── paper/                          # Paper trading (Testnet)
+│   │   ├── audit_to_parquet.py         # Audit data conversion to Parquet
+│   │   ├── microstructure_model.py     # Market microstructure simulation
+│   │   ├── paper_ems_adapter.py        # Execution adapter for Paper Trading (711 lines)
+│   │   ├── paper_runner.py             # Main runner script for Paper environment
+│   │   ├── paper_state_manager.py      # Virtual order state management
+│   │   └── shock_simulator.py          # Market shock simulator
+│   ├── backtest/                       # Historical backtesting
+│   └── upstream_runner.py              # Launcher for Data/Risk upstream processes
 │
 # ==========================================
-# 2. HỒ DỮ LIỆU (DATA LAKE)
+# 2. DATA LAKE
 # ==========================================
-├── ho_du_lieu/
+├── ho_du_lieu/                         # (Data Lake)
 │   ├── tho/                            # (Raw) Immutable Parquet — M-D1 output
 │   │   ├── {exchange}/{symbol}/        # [M-D1] 1h OHLCV bars + liquidation
 │   │   │   └── year={Y}/month={M}/data.parquet
@@ -176,10 +179,10 @@ KAIROS v3/
 │   │   │   └── year={Y}/month={M}/data.parquet
 │   │   └── onchain/{asset}/{metric}/   # [M-D1] Hourly on-chain (CryptoQuant)
 │   │       └── year={Y}/month={M}/data.parquet
-│   ├── da_xu_ly/                       # Dữ liệu đã làm sạch & đồng bộ
+│   ├── da_xu_ly/                       # Cleaned & synchronized data
 │   ├── kho_dac_trung/                  # (Feature Store)
-│   │   ├── offline/                    # Phục vụ train AI
-│   │   └── online/                     # Cache trên RAM phục vụ chạy Live
+│   │   ├── offline/                    # For AI training
+│   │   └── online/                     # In-memory cache for live inference
 │   │      └── memory_store.py          # OnlineFeatureStore
 │   ├── thuc_thi/                       # Live execution state (WAL + snapshot + sessions)
 │   │   ├── nhat_ky_wal/                # kairos.wal, wal_log.jsonl, funding_dedup.jsonl
@@ -191,7 +194,7 @@ KAIROS v3/
 │   │   ├── paper_snapshot.json         # Paper state snapshot
 │   │   ├── paper_audit_*.jsonl         # Fill audit trail (line-buffered)
 │   │   └── parquet/                    # Converted Parquet (audit_to_parquet)
-│   ├── settlement_spool/{exchange}/    # [M-D1] Persistent spool cho settlement buffer
+│   ├── settlement_spool/{exchange}/    # [M-D1] Persistent spool for settlement buffer
 │   ├── dlq/{exchange}/                 # [M-D1] Dead Letter Queue per-exchange
 │   ├── ket_noi/{exchange}/             # [M-D1] WS gap logs (gaps_{date}.jsonl)
 │   ├── quarantine/                     # [M-D1] Orphan Parquet quarantine
@@ -202,9 +205,9 @@ KAIROS v3/
 │       └── FLATTEN_LOCK                # Written by EmergencyFlattener (blocks all new trades)
 │
 # ==========================================
-# 3. ĐỘNG CƠ DỮ LIỆU (DATA ENGINE)
+# 3. DATA ENGINE
 # ==========================================
-├── dong_co_du_lieu/
+├── dong_co_du_lieu/                    # (Data Engine)
 │   ├── quan_ly_phien_ban/              # [M-D0] Data Lineage Registry (8 files)
 │   │   ├── __init__.py                 # Public API export
 │   │   ├── _locking.py                 # Cross-platform file lock (msvcrt/fcntl)
@@ -212,10 +215,10 @@ KAIROS v3/
 │   │   ├── exceptions.py               # Custom exception hierarchy (LineageError, PIT failures)
 │   │   ├── lineage_registry.py         # Append-only JSONL registry, as_of() PIT query
 │   │   ├── pit_verifier.py             # verify_pit_production() stratified sampling (500+ rows)
-│   │   ├── symbol_lifecycle_poller.py   # Daemon daily poll → state-based interval tracking
+│   │   ├── symbol_lifecycle_poller.py  # Daemon daily poll → state-based interval tracking
 │   │   └── verification_registry.py    # VerificationRecord + verification log
 │   ├── thu_thap/                       # [M-D1] Raw Data Ingestion (11 modules)
-│   │   ├── bar_types.py                # BarData dataclass — M-D1 schema đầy đủ
+│   │   ├── bar_types.py                # BarData dataclass — full M-D1 schema
 │   │   ├── bar_processor.py            # compute_dq_flags, attach_oi_to_bar, write_parquet_atomic
 │   │   ├── settlement_buffer.py        # T+5min funding buffer + persistent spool
 │   │   ├── dead_letter_queue.py        # Rolling 1h window per-exchange, route_to_dlq
@@ -227,9 +230,9 @@ KAIROS v3/
 │   │   ├── symbol_remapper.py          # Exchange symbol → canonical asset_id (date-range)
 │   │   ├── websocket/                  # Real-time streaming
 │   │   │   ├── binance_ws.py           # BinanceGateway
-│   │   │   ├── okx_ws.py               # OkxGateway
-│   │   │   └── bybit_ws.py             # BybitGateway
-│   │   └── rest_api/                   # Polling định kỳ
+│   │   │   ├── okx_ws.py              # OkxGateway
+│   │   │   └── bybit_ws.py            # BybitGateway
+│   │   └── rest_api/                   # Periodic polling
 │   │       ├── base_rest.py            # BaseRestPoller
 │   │       ├── binance_rest.py         # BinanceRestPoller
 │   │       ├── okx_rest.py             # OkxRestPoller
@@ -251,36 +254,36 @@ KAIROS v3/
 │   │   ├── symbol_remapper.py          # [M-D3] RENAME/FORK corporate actions, symbol history
 │   │   ├── seed_sector_assignments.py  # [M-D3] One-time seeder: sector_map.yaml → DB
 │   │   ├── feature_cache.py            # [M-D4] FeatureCache, atomic write, cache_hash, BTC-first
-│   │   └── pre_aggregate_l2.py         # [M-D4] L2→OFI, binary snapshot store (KHÔNG delete)
+│   │   └── pre_aggregate_l2.py         # [M-D4] L2→OFI, binary snapshot store (NEVER delete)
 │   └── ong_dan_dac_trung/              # (Feature Pipeline) <10µs/tick
 │       └── online/
 │           ├── feature_registry.py     # FEATURE_REGISTRY + CompiledPlan
 │           └── incremental_engine.py   # IncrementalFeatureEngine
 │
 # ==========================================
-# 4. TRÍ TUỆ NHÂN TẠO (MACHINE LEARNING)
+# 4. MACHINE LEARNING
 # ==========================================
-├── hoc_may/
-│   ├── mo_hinh/                        # (Models) LSTM, Transformer — [PLANNED, chưa tồn tại]
-│   ├── huan_luyen/                     # Script train model
+├── hoc_may/                            # (Machine Learning)
+│   ├── mo_hinh/                        # (Models) LSTM, Transformer — [PLANNED, not yet implemented]
+│   ├── huan_luyen/                     # Model training scripts
 │   ├── suy_luan/                       # ONNX/TensorRT Inference
 │   ├── to_hop_alpha/                   # (Alpha Combiner)
-│   └── giam_sat_mo_hinh/               # (ML MONITORING)
+│   └── giam_sat_mo_hinh/              # (ML Monitoring)
 │       ├── sai_lech_dac_trung/         # Feature Drift
 │       └── sai_lech_du_doan/           # Prediction Drift
 │
 # ==========================================
-# 5. THỰC THI CHIẾN DỊCH (EXECUTION CORE)
+# 5. EXECUTION CORE
 # ==========================================
-├── thuc_thi_lenh/
+├── thuc_thi_lenh/                      # (Execution Core)
 │   ├── bo_nho_trang_thai/              # [PERSISTENCE BACKBONE / STATE STORE]
-│   │   ├── snapshot/                   # Dump state định kỳ mỗi 5s
+│   │   ├── snapshot/                   # Periodic state dump every 5s
 │   │   ├── nhat_ky_wal/                # Write-Ahead Log
 │   │   │   └── durable_wal.py          # War-Grade WAL (mmap + CRC32)
 │   │   ├── vi_the/                     # (Positions)
 │   │   ├── so_lenh/                    # (Orders)
 │   │   ├── so_du/                      # (Balances)
-│   │   └── state_manager.py            # Quản lý trạng thái hệ thống
+│   │   └── state_manager.py            # System state manager
 │   ├── cong_ket_noi/                   # (Gateway) Binance/Bybit/OKX
 │   │   ├── base_adapter.py
 │   │   ├── binance_adapter.py
@@ -299,12 +302,12 @@ KAIROS v3/
 │   │   ├── position_sync.py            # [NEW] Startup Sync + Drift Detection + Healing
 │   │   ├── session_manager.py          # [NEW] Daily P&L Session Rotation + Archive
 │   │   ├── ke_toan_pnl/                # [NEW] Accounting: Realized/Unrealized PnL
-│   │   │   ├── pnl_aggregator.py       # Root PnL Orchestrator (622 dòng)
+│   │   │   ├── pnl_aggregator.py       # Root PnL Orchestrator (622 lines)
 │   │   │   ├── pnl_tracker.py          # Integer-Scaled Realized PnL + OCC
 │   │   │   ├── fee_ledger.py           # Trade Fees + Funding Payments
 │   │   │   └── mark_to_market.py       # Live Mark Price + Unrealized PnL
 │   │   └── thoat_vi_the/               # [NEW] Exit Management System (EMS Exit Layer)
-│   │       ├── exit_coordinator.py     # [NEW] State machine + strategy dispatch (411 dòng)
+│   │       ├── exit_coordinator.py     # [NEW] State machine + strategy dispatch (411 lines)
 │   │       ├── position_state.py       # [NEW] FLAT→OPEN→CLOSING→PARTIAL→CLOSED→QUARANTINED
 │   │       ├── position_sizer.py       # [NEW] Anti-flip qty calculator
 │   │       ├── audit_logger.py         # [NEW] Append-only exit audit trail (daily rotation)
@@ -317,25 +320,25 @@ KAIROS v3/
 │   │           ├── breakeven.py        # [NEW] Move SL to breakeven after trigger %
 │   │           ├── partial_exit.py     # [NEW] Partial close at multiple TP levels
 │   │           └── time_based.py       # [NEW] Max hold time forced exit
-│   ├── danh_ba_chien_luoc/             # (STRATEGY REGISTRY)
+│   ├── danh_ba_chien_luoc/             # (Strategy Registry)
 │   ├── quan_ly_lenh/                   # [NEW] (OMS) Order Management System
-│   │   ├── order_book.py               # In-Memory Sổ Lệnh + Per-Symbol Lock (656 dòng)
+│   │   ├── order_book.py               # In-Memory Order Book + Per-Symbol Lock (656 lines)
 │   │   ├── reconciler.py               # Exchange Reconciliation + Cancel-All
 │   │   └── oms_serializer.py           # Binary WAL Payload Codec (32B)
 │   ├── dong_co_thuc_thi/               # (EMS) Execution Management
 │   │   ├── ems.py
 │   │   └── execution_risk_engine.py
-│   ├── theo_doi_do_tre/                # (LATENCY TRACKER)
-│   └── vong_lap_su_kien.py             # (Event Loop) — 1105 dòng, trái tim hệ thống
+│   ├── theo_doi_do_tre/                # (Latency Tracker)
+│   └── vong_lap_su_kien.py             # (Event Loop) — 1105 lines, the heart of the system
 │
 # ==========================================
-# 6. LƯỚI BẢO VỆ (RISK SYSTEM)
+# 6. RISK SYSTEM
 # ==========================================
-├── quan_tri_rui_ro/
+├── quan_tri_rui_ro/                    # (Risk Management)
 │   ├── rui_ro_cheo_chien_luoc/         # Cross-Strategy Risk
 │   │   ├── bu_tru_vi_the/              # Exposure Netting
 │   │   └── xung_dot_tin_hieu/          # Conflict Detector
-│   ├── kiem_tra_truoc_lenh/            # Pre-trade Risk (risk_gate.py 557 dòng)
+│   ├── kiem_tra_truoc_lenh/            # Pre-trade Risk (risk_gate.py 557 lines)
 │   │   ├── rules/
 │   │   │   ├── base_rule.py
 │   │   │   ├── global_rules.py         # MaxDailyLoss, MaxDrawdown
@@ -343,19 +346,19 @@ KAIROS v3/
 │   │   │   └── rate_rules.py           # OrderRate, DuplicateGuard
 │   │   ├── reconciliation.py
 │   │   ├── risk_codes.py
-│   │   └── risk_gate.py                # Cổng kiểm soát rủi ro chính
+│   │   └── risk_gate.py                # Primary risk control gate
 │   └── nguoi_gac_cong/                 # (Watchdog) Kill Switch
 │       └── watchdog/
 │           ├── watchdog.py
-│           ├── emergency_flattener.py  # [NEW] Standalone REST flatten Binance/OKX/Bybit (374 dòng)
+│           ├── emergency_flattener.py  # [NEW] Standalone REST flatten Binance/OKX/Bybit (374 lines)
 │           └── adapters/
 │               ├── lite_rest.py
 │               └── war_grade_rest.py
 │
 # ==========================================
-# 7. HẠ TẦNG (INFRASTRUCTURE)
+# 7. INFRASTRUCTURE
 # ==========================================
-├── ha_tang/
+├── ha_tang/                            # (Infrastructure)
 │   ├── bus_su_kien/                    # (Event Bus) ZeroMQ
 │   │   ├── zmq_bus.py                  # AsyncEventBus PUB/SUB
 │   │   ├── luoc_do_du_lieu/v1/         # Event Schema Versioning
@@ -375,9 +378,9 @@ KAIROS v3/
 │       └── time_validator.py           # PTP/NTP Clock Validation
 │
 # ==========================================
-# 8. GIÁM SÁT (MONITORING & TESTING)
+# 8. MONITORING & TESTING
 # ==========================================
-├── giam_sat/
+├── giam_sat/                           # (Monitoring)
 │   ├── chi_so_hieu_suat/               # System Metrics
 │   │   ├── collector.py                # Dedicated OS Thread collector
 │   │   └── reporter.py                 # ZMQ reporter
@@ -392,7 +395,7 @@ KAIROS v3/
 ├── kiem_thu/
 │   └── san_gia_lap/                    # Mock Exchange
 ├── test/                               # Unit & Integration Tests (473 test functions / 18 files)
-│   ├── test_live_runner.py             # Live Runner — 14 components, 966 dòng
+│   ├── test_live_runner.py             # Live Runner — 14 components, 966 lines
 │   ├── test_chaos_risk.py              # Pre-trade Risk Gate adversarial scenarios
 │   ├── test_execution_pipeline.py      # Execution layer: Retry, TokenBucket, RiskEngine, Adapters
 │   ├── test_feature_layer.py           # Feature engine pipeline
@@ -414,24 +417,24 @@ KAIROS v3/
 │   └── test_session_pnl.py             # Session + PnL tests (20 tests)
 │
 # ==========================================
-# 9. KỊCH BẢN VẬN HÀNH (SCRIPTS)
+# 9. OPERATIONAL SCRIPTS
 # ==========================================
-└── kich_ban/
+└── kich_ban/                           # (Scripts)
     ├── __init__.py                     # Package marker
-    ├── khoi_dong.py                    # Stack launcher lõi: preflight, process manager, shutdown (147 dòng)
-    ├── khoi_dong_live.py               # Entry point tiền thật: `make live`
-    ├── khoi_dong_paper.py              # Entry point tiền ảo: `make paper-launch`
-    └── dao_tao_lai_model.py            # Re-train ML model pipeline
+    ├── khoi_dong.py                    # Core stack launcher: preflight, process manager, shutdown (147 lines)
+    ├── khoi_dong_live.py               # Live-money entry point: `make live`
+    ├── khoi_dong_paper.py              # Paper-trading entry point: `make paper-launch`
+    └── dao_tao_lai_model.py            # ML model re-training pipeline
 ```
 
 ---
 
-## 3. Đặc Tả Module (Module Specifications)
+## 3. Module Specifications
 
-### Trạng Thái Triển Khai (Component Status)
+### Component Status
 
-| Module | File chính | Dòng | Trạng thái | Test |
-|--------|-----------|------|------------|------|
+| Module | Primary File(s) | Lines | Status | Tests |
+|--------|-----------------|-------|--------|-------|
 | **M-D0: Data Lineage** | `quan_ly_phien_ban/` (8 files) | ~1600 | Implemented | `test_d0_lineage.py` (25 tests) |
 | **M-D1: Raw Ingestion** | `thu_thap/` (11 modules) | ~2200 | Implemented | `test_d1_ingestion.py` (31 tests) |
 | **M-D2: Gap Reconciliation** | `xu_ly_lo/` (8 files) | ~2800 | Implemented | `test_d2_gap_reconciliation.py` (37 tests) |
@@ -460,105 +463,105 @@ KAIROS v3/
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7208720b-877d-4960-8e0d-1f991cbd9ca1" />
 
-**Nguyên tắc thiết kế hiệu năng:** hot-path loại bỏ GC hoàn toàn (`gc.disable()`), pre-allocated ctypes struct thay Python objects, lock-free SPSC ring buffer, tránh lock trên critical path khi SPSC assumption còn giữ được.
+**Performance design principles:** The hot-path completely eliminates GC (`gc.disable()`), uses pre-allocated ctypes structs instead of Python objects, employs lock-free SPSC ring buffers, and avoids locks on the critical path as long as the SPSC assumption holds.
 
 ---
 
-### 3.1. Cấu Hình & Môi Trường (Config & Runtime)
+### 3.1. Configuration & Runtime
 
-Module điều phối cấp cao nhất, kết hợp giữa quản lý tham số tĩnh và kiến trúc giả lập Paper Trading.
+The highest-level orchestration module, combining static parameter management with the Paper Trading simulation architecture.
 
-#### Cấu hình tĩnh (`cau_hinh/`)
+#### Static Configuration (`cau_hinh/`)
 
-Tách bạch hoàn toàn logic và tham số. Không hardcode bất kỳ giá trị nào trong source code:
+Complete separation of logic and parameters. No values are hardcoded in source code:
 
-* `universe.yaml` — Exchange adapters (timeout, Token Bucket rate/capacity cho Binance/Bybit/OKX) + Symbol master: ánh xạ cặp tiền thành số nguyên `symbol_id` để truy xuất mảng O(1) trong hot-path, định nghĩa `qty_step`, `price_step`, `max_pos_usdt`.
-* `trading.yaml` — Toàn bộ tham số giao dịch: Risk Gate (`max_daily_loss_usdt`, `max_drawdown_pct`), OMS (`segment_rotation_count: 60000`, `archive_max_size: 50000`), PnL (`scale_factor: 1e8`, `checkpoint_every: 1000`), Position Sync, Funding, Session rotation, Strategy (`vector_size`).
-* `infra.yaml` — Hạ tầng vận hành: Flow Control (CRITICAL queue `100k`, drain budget `200µs`, EWMA Adaptive Shedder), Execution Protection (Rate Limiter, Circuit Breaker, Retry — dưới key `execution:`), Alerting Telegram + rules (dưới key `alerting:`), System Metrics observability (dưới key `observability:`).
-* `adapter_loader.py` — Factory tự động nạp cấu hình kết hợp biến môi trường `.env`:
+* `universe.yaml` — Exchange adapters (timeout, Token Bucket rate/capacity for Binance/Bybit/OKX) + Symbol master: maps trading pairs to integer `symbol_id` for O(1) array lookups on the hot-path, defines `qty_step`, `price_step`, `max_pos_usdt`.
+* `trading.yaml` — All trading parameters: Risk Gate (`max_daily_loss_usdt`, `max_drawdown_pct`), OMS (`segment_rotation_count: 60000`, `archive_max_size: 50000`), PnL (`scale_factor: 1e8`, `checkpoint_every: 1000`), Position Sync, Funding, Session rotation, Strategy (`vector_size`).
+* `infra.yaml` — Operational infrastructure: Flow Control (CRITICAL queue `100k`, drain budget `200µs`, EWMA Adaptive Shedder), Execution Protection (Rate Limiter, Circuit Breaker, Retry — under `execution:` key), Alerting Telegram + rules (under `alerting:` key), System Metrics observability (under `observability:` key).
+* `adapter_loader.py` — Factory that automatically loads configuration combined with `.env` environment variables:
 
 ```python
 # cau_hinh/adapter_loader.py
 def build_adapters(env_path, exchanges_yaml, active_exchanges):
-    """Tự động khởi tạo Exchange Adapters từ config files."""
+    """Automatically initialize Exchange Adapters from config files."""
     active = list({cfg.exchange for cfg in configs.values()})
     adapters = build_adapters(env_path, exchanges_yaml, active_exchanges=active)
 ```
 
-#### Môi trường Paper Trading (`moi_truong_chay/paper/`)
+#### Paper Trading Environment (`moi_truong_chay/paper/`)
 
-Không dùng "mock" đơn giản. Đây là một sàn giao dịch nội bộ mô phỏng vi cấu trúc thị trường (Market Microstructure) với **Pipeline Khớp Lệnh 19 Bước**:
+Not a simplistic "mock". This is an internal exchange that simulates market microstructure with a **19-Step Fill Pipeline**:
 
-* **Seeded & Replay-friendly**: Mọi lệnh được gán `SHA256-seeded RNG` để giảm sai khác giữa các lần chạy paper/replay. Đây là tính chất determinism trong phạm vi simulator; nó không đồng nghĩa với live determinism hay external consistency với exchange thật.
-* **Latency Jitter**: Phân phối Lognormal đuôi dài (heavy-tail) mô phỏng network jitter thực tế. Không khớp lệnh "ngay lập tức" như các thư viện thông thường.
-* **Nhiễu loạn Orderbook (Spoofing)**: Tự động bào mòn sổ lệnh, mô phỏng ảo ảnh thanh khoản (Liquidity Mirage) và lệnh tảng băng (Iceberg).
-* **Trượt giá (Kyle's Alpha)**: Ứng dụng mô hình Kyle's Alpha tính toán self-impact. Tự động sinh tỷ lệ độc hại (Toxicity / Adverse Selection) liên tục.
-* `microstructure_model.py` — Process nền nghe ZMQ để bám sát Volatility, Order Flow Imbalance, và tính toán hệ số lây lan rủi ro chéo (Contagion: BTC sập → ALT đổ) trong cửa sổ 500ms.
-* `shock_simulator.py` — Giả lập các cú sốc đột ngột (Flash Crash, Liquidation Cascade) để stress-test thuật toán quản lý rủi ro.
+* **Seeded & Replay-friendly**: Every order is assigned a `SHA256-seeded RNG` to minimize variance between paper/replay runs. This is a determinism property within the scope of the simulator; it does not equate to live determinism or external consistency with real exchanges.
+* **Latency Jitter**: Heavy-tailed Lognormal distribution simulating realistic network jitter. Orders are not filled "instantly" as in conventional libraries.
+* **Orderbook Perturbation (Spoofing)**: Automatic orderbook erosion, simulating Liquidity Mirages and Iceberg orders.
+* **Slippage (Kyle's Alpha)**: Applies Kyle's Alpha model to compute self-impact. Continuously generates Toxicity / Adverse Selection ratios.
+* `microstructure_model.py` — Background process listening on ZMQ, tracking Volatility, Order Flow Imbalance, and computing cross-asset risk contagion coefficients (Contagion: BTC crash → ALT cascade) within a 500ms window.
+* `shock_simulator.py` — Simulates sudden market shocks (Flash Crash, Liquidation Cascade) to stress-test risk management algorithms.
 
-#### Môi trường Live Trading (`moi_truong_chay/live/`) — Live Orchestrator (production-oriented)
+#### Live Trading Environment (`moi_truong_chay/live/`) — Live Orchestrator (production-oriented)
 
-File `live_runner.py` — **882 dòng**, là module khởi động toàn bộ pipeline giao dịch thật (real money). Tuân thủ kiến trúc **SRE-grade 12-Step Fail-Fast Startup**:
+`live_runner.py` — **882 lines**, the module that bootstraps the entire real-money trading pipeline. Follows an **SRE-grade 12-Step Fail-Fast Startup** architecture:
 
 ```
-Step  1: system.KILLED check           ← Abort ngay nếu sentinel tồn tại
+Step  1: system.KILLED check           ← Abort immediately if sentinel exists
 Step  2: Load live_config.yaml         ← SRE tuning parameters
 Step  3: Load universe.yaml + secrets  ← Symbols + API keys
-Step  4: Init Exchange Adapters        ← Binance/Bybit/OKX với httpx.AsyncClient riêng
-Step  5: Balance check                 ← Fail-fast nếu < min_startup_balance_usdt
-Step  6: Init KairosState (WAL-first)  ← Crash-recovery từ WAL → Snapshot
+Step  4: Init Exchange Adapters        ← Binance/Bybit/OKX with dedicated httpx.AsyncClient
+Step  5: Balance check                 ← Fail-fast if < min_startup_balance_usdt
+Step  6: Init KairosState (WAL-first)  ← Crash-recovery from WAL → Snapshot
 Step  7: Init ExecutionGateway         ← Ring buffer + 5 threads
 Step  8: Startup Reconciliation        ← Cancel sweep + orphan fill detection
-Step  9: Flush ZMQ stale signals       ← Drain messages tồn đọng
+Step  9: Flush ZMQ stale signals       ← Drain stale messages
 Step 10: Launch Health Daemon          ← 401/403/5xx/429 monitoring
 Step 11: Launch Reconcile Daemon       ← Periodic state sync
 Step 12: Launch KillSwitch Monitor     ← system.KILLED file polling
 ```
 
-**3 nguyên tắc vận hành cốt lõi:**
+**3 Core Operational Principles:**
 
-* **Absolute Physical Rate Isolation**: Mỗi daemon (Health, Reconcile, Hot-Path) khởi tạo `httpx.AsyncClient` và `TokenBucket` **hoàn toàn độc lập**. Không bao giờ chia sẻ connection pool hay rate quota giữa background monitoring và execution path — tránh tình huống health check chiếm hết rate limit của lệnh giao dịch.
+* **Absolute Physical Rate Isolation**: Each daemon (Health, Reconcile, Hot-Path) initializes its own `httpx.AsyncClient` and `TokenBucket` **completely independently**. Connection pools and rate quotas are never shared between background monitoring and the execution path — preventing health checks from consuming the rate limit budget allocated for trade orders.
 
-* **Crash-Consistency (WAL First)**: Khi khôi phục sau crash, thứ tự bắt buộc là: Đọc WAL nội bộ (lấy lệnh in-flight) → Fetch sàn (lấy lệnh đã khớp) → So sánh. Nếu phát hiện orphan fill (sàn có position mà WAL không ghi nhận), symbol đó bị **HALT** ngay lập tức. Đây là contract mong muốn; nó chỉ đáng tin khi không có mutation path nào bypass WAL hoặc side effect external chưa được reconcile lại.
+* **Crash-Consistency (WAL First)**: When recovering after a crash, the mandatory sequence is: Read internal WAL (retrieve in-flight orders) → Fetch from exchange (retrieve filled orders) → Compare. If an orphan fill is detected (exchange has a position that the WAL does not record), that symbol is **HALTed** immediately. This is the intended contract; it is only trustworthy when no mutation path bypasses the WAL or external side effects remain unreconciled.
 
-* **CoalescingQueue**: Queue đặc biệt cho reconciliation snapshots — khi đầy, tự động drop snapshot cũ nhất thay vì block producer. Cơ chế này chỉ nên áp cho snapshot/telemetry có thể thay thế; không nên hiểu là mọi event causal đều an toàn để drop.
+* **CoalescingQueue**: A specialized queue for reconciliation snapshots — when full, it automatically drops the oldest snapshot instead of blocking the producer. This mechanism should only be applied to replaceable snapshot/telemetry data; it should not be interpreted as meaning every causal event is safe to drop.
 
-> `Fail-fast`, `drop`, và `coalescing` ở lớp vận hành là trade-off latency. Nếu event bị bỏ có thể làm sai portfolio/order state, engine nên tự đánh dấu `degraded`, chạy recovery, hoặc `halt` thay vì tiếp tục coi state là authoritative.
+> `Fail-fast`, `drop`, and `coalescing` at the operational layer are latency trade-offs. If a dropped event could corrupt portfolio/order state, the engine should self-mark as `degraded`, run recovery, or `halt` rather than continue treating state as authoritative.
 
-**Cấu hình SRE** (`live_config.yaml`):
+**SRE Configuration** (`live_config.yaml`):
 
 ```yaml
 live:
   health_check:
-    interval_s: 60.0           # Mỗi 60s kiểm tra balance + latency
-    max_failures: 3            # 3 lần 5xx liên tiếp → safe_hard_kill
-    latency_threshold_ms: 1000 # Cảnh báo nếu exchange response > 1s
+    interval_s: 60.0           # Check balance + latency every 60s
+    max_failures: 3            # 3 consecutive 5xx errors → safe_hard_kill
+    latency_threshold_ms: 1000 # Alert if exchange response > 1s
   reconciliation:
-    interval_s: 120.0          # Mỗi 2 phút đối soát state
-    max_drift_s: 600.0         # Nếu > 10 phút không sync → force sync ngay
-    max_pressure: 0.70         # Skip sync nếu gateway backpressure > 70%
+    interval_s: 120.0          # State reconciliation every 2 minutes
+    max_drift_s: 600.0         # If > 10 minutes without sync → force sync immediately
+    max_pressure: 0.70         # Skip sync if gateway backpressure > 70%
   cancel_policy:
-    mode: "ALL"                # Cancel tất cả open orders khi startup
-    cooldown_s: 10.0           # Chờ 10s sau cancel để exchange settle
+    mode: "ALL"                # Cancel all open orders at startup
+    cooldown_s: 10.0           # Wait 10s after cancel for exchange to settle
 ```
 
 ---
 
-### 3.2. Hồ Dữ Liệu (Data Lake)
+### 3.2. Data Lake
 
-Kiến trúc Cold-Storage, tối ưu cho Backtest Vectorized hàng tỷ rows.
+Cold-Storage architecture, optimized for vectorized backtesting across billions of rows.
 
-#### Dữ liệu thô (`ho_du_lieu/tho/`) — M-D1 Output
+#### Raw Data (`ho_du_lieu/tho/`) — M-D1 Output
 
-Không bao giờ chỉnh sửa (Immutable). Lưu dưới định dạng Parquet nén Snappy theo chuẩn **Year/Month Partitioning**. Mọi Parquet file sau write PHẢI đăng ký với M-D0 `LineageRegistry`.
+Never modified (Immutable). Stored in Snappy-compressed Parquet format using **Year/Month Partitioning**. Every Parquet file after write MUST be registered with the M-D0 `LineageRegistry`.
 
 * `{exchange}/{symbol}/year={Y}/month={M}/data.parquet` — **1h OHLCV Bar** (17 columns): event_time_ns, OHLCV, funding_rate, oi_usdt, liquidation_buy/sell_usdt, dq_flags, is_settlement_bar, is_backfill.
 * `{exchange}/{symbol}/long_short/year={Y}/month={M}/data.parquet` — **Long/Short Ratio** (5min, 7 columns): timestamp_ns, long_short_ratio, long/short_account_ratio.
-* `onchain/{asset}/{metric}/year={Y}/month={M}/data.parquet` — **On-chain Data** (hourly, 6 columns): exchange_reserve, exchange_netflow, stablecoin_supply từ CryptoQuant.
+* `onchain/{asset}/{metric}/year={Y}/month={M}/data.parquet` — **On-chain Data** (hourly, 6 columns): exchange_reserve, exchange_netflow, stablecoin_supply from CryptoQuant.
 
-#### Kho Đặc Trưng Online (`ho_du_lieu/kho_dac_trung/online/memory_store.py`)
+#### Online Feature Store (`ho_du_lieu/kho_dac_trung/online/memory_store.py`)
 
-File **291 dòng**, là bộ nhớ cache siêu tốc trên RAM phục vụ inference live. Thiết kế đạt chuẩn **Zero-allocation trên hot-path**:
+**291 lines**, an ultra-fast in-memory cache serving live inference. Designed to achieve **zero-allocation on the hot-path**:
 
 ```python
 # ho_du_lieu/kho_dac_trung/online/memory_store.py
@@ -575,14 +578,14 @@ class OnlineFeatureStore:
         ]
 ```
 
-**Thiết kế chống False-sharing**: `FEATURE_EVENT_DTYPE.itemsize == 192 bytes` (vừa khít 3 cache lines 64B). Symbols ở index `i` và `i+1` bắt đầu ở offset `192*i` và `192*(i+1)` — header 64B đầu tiên không bao giờ trùng cache line.
+**Anti-False-Sharing Design**: `FEATURE_EVENT_DTYPE.itemsize == 192 bytes` (exactly 3 × 64B cache lines). Symbols at index `i` and `i+1` start at offsets `192*i` and `192*(i+1)` — the first 64B header never shares a cache line.
 
-**Reorder Buffer (ROB)**: Trong thị trường crypto, do độ trễ mạng, các luồng WebSocket thường gửi gói tin bị lộn xộn thứ tự (out-of-order). Tính toán OFI hoặc EMA dựa trên dữ liệu lộn xộn sẽ cho kết quả sai. ROB là một "phòng chờ" chứa các tick đến sớm trong cửa sổ 5ms. Khi đến hạn, hệ thống dọn dẹp bằng thuật toán **In-place Insertion Sort** siêu nhẹ, vì mảng thường chỉ có 1-3 phần tử bị lộn xộn:
+**Reorder Buffer (ROB)**: In crypto markets, due to network latency, WebSocket streams frequently deliver out-of-order packets. Computing OFI or EMA on disordered data produces incorrect results. The ROB is a "waiting room" that holds early-arriving ticks within a 5ms window. At expiration, the system flushes using an ultra-lightweight **In-place Insertion Sort** algorithm, since the array typically has only 1-3 disordered elements:
 
-> ROB chỉ là heuristic reorder window, không phải "timeline sự thật" tuyệt đối. Nếu exchange timestamp thiếu nhất quán hoặc event đến trễ ngoài cửa sổ, feature nên phân biệt rõ `event_time` với `processing_time`, và cần policy rõ cho late event thay vì giả định reorder xong là đúng.
+> The ROB is only a heuristic reorder window, not an absolute "ground-truth timeline". If exchange timestamps are inconsistent or events arrive beyond the window, features should clearly distinguish `event_time` from `processing_time`, and an explicit policy for late events is needed rather than assuming reordering alone guarantees correctness.
 
 ```python
-# In-place insertion sort — n ≤ 64, thường chỉ 1-3 phần tử
+# In-place insertion sort — n ≤ 64, typically only 1-3 elements
 for i in range(1, n):
     key_ts   = int(buf[i, 0])
     key_slot = int(buf[i, 1])
@@ -595,55 +598,55 @@ for i in range(1, n):
     buf[j + 1, 1] = key_slot
 ```
 
-**Zero-Allocation Write** — `_write_to_store()` ghi trực tiếp vào NumPy structured array mà không tạo bất kỳ Python object nào:
+**Zero-Allocation Write** — `_write_to_store()` writes directly to the NumPy structured array without creating any Python objects:
 
 ```python
 # memory_store.py — _write_to_store()
 def _write_to_store(self, idx, raw, effective_mask):
     """Zero-allocation write to main store."""
     s = self._store   # single attribute lookup, not a copy
-    # Column-first access: ghi trực tiếp vào mảng int64/uint64
-    # KHÔNG tạo numpy.void intermediate object
+    # Column-first access: write directly to int64/uint64 arrays
+    # Does NOT create intermediate numpy.void objects
     s["exchange_ts"][idx]            = raw.exchange_ts
     s["receive_ts"][idx]             = raw.receive_ts
     s["processed_ts"][idx]           = raw.processed_ts
     s["source_latency_ns"][idx]      = raw.source_latency_ns
     s["computation_latency_ns"][idx] = raw.computation_latency_ns
     s["feature_mask"][idx]           = effective_mask
-    # ctypes.memmove: copy 128 bytes feature block ở tốc độ C
+    # ctypes.memmove: copy 128 bytes feature block at C speed
     ctypes.memmove(self._feat_ptrs[idx], ctypes.addressof(raw.features), _FEAT_BYTES)
 ```
 
-> **Tại sao dùng Column-first thay vì Row indexing?** Nếu viết `self._store[idx]["exchange_ts"] = ...` (row-first), NumPy sẽ tạo một `numpy.void` object tạm thời — tức là 1 lần allocation cho mỗi tick. Column-first `self._store["exchange_ts"][idx] = ...` ghi thẳng vào mảng, bypass hoàn toàn Python object layer.
+> **Why Column-first instead of Row indexing?** Writing `self._store[idx]["exchange_ts"] = ...` (row-first) causes NumPy to create a temporary `numpy.void` object — that is, 1 allocation per tick. Column-first `self._store["exchange_ts"][idx] = ...` writes directly to the array, completely bypassing the Python object layer.
 
-**Lockless `_drop_mask` Read** — Khi `signal_congestion()` thay đổi `_drop_mask` từ monitor thread, hot-path đọc giá trị mới **không cần lock**. CPython GIL đảm bảo `LOAD_ATTR` (đọc integer) là atomic ở tầng bytecode. Thêm lock sẽ tốn ~100ns/tick — vô nghĩa vì giá trị chỉ thay đổi mỗi vài giây.
+**Lockless `_drop_mask` Read** — When `signal_congestion()` changes `_drop_mask` from the monitor thread, the hot-path reads the new value **without any lock**. CPython's GIL guarantees that `LOAD_ATTR` (reading an integer) is atomic at the bytecode level. Adding a lock would cost ~100ns/tick — meaningless since the value only changes every few seconds.
 
 ```python
-# commit_raw() — hot-path, KHÔNG lock
+# commit_raw() — hot-path, NO lock
 effective_mask = raw.feature_mask & ~self._drop_mask   # GIL-atomic int read
 if effective_mask == 0:
-    return False   # Mọi features bị drop → bỏ qua tick này
+    return False   # All features dropped → skip this tick
 ```
 
-**Priority Degradation API** — 3 cấp độ Backpressure:
+**Priority Degradation API** — 3 Backpressure levels:
 
-| Level | Hành vi | Mục đích |
-|-------|---------|----------|
-| 0 | Normal — ghi tất cả features | Hoạt động bình thường |
-| 1 | Drop Trade-derived (Welford, EMA, OFI) | Giảm tải khi hệ thống bắt đầu nghẽn |
-| 2 | Drop ALL market features | Chỉ giữ Risk/Liquidation sentinel |
+| Level | Behavior | Purpose |
+|-------|----------|---------|
+| 0 | Normal — write all features | Normal operation |
+| 1 | Drop Trade-derived (Welford, EMA, OFI) | Reduce load when system begins to congest |
+| 2 | Drop ALL market features | Retain only Risk/Liquidation sentinel |
 
 ---
 
-### 3.3. Động Cơ Dữ Liệu (Data Engine)
+### 3.3. Data Engine
 
-**Hợp đồng hiệu năng:** latency budget **< 10–50µs/tick** từ WebSocket receive đến feature ready trong `OnlineFeatureStore`.
+**Performance contract:** Latency budget **< 10–50µs/tick** from WebSocket receive to feature ready in `OnlineFeatureStore`.
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/e35efc49-1df3-4ce2-8247-ea6420478ac5" />
 
 #### M-D0: Data Lineage Registry (`dong_co_du_lieu/quan_ly_phien_ban/` — 8 files)
 
-Immutable dataset registry — mọi Parquet artifact đều phải đăng ký trước khi dùng trong backtest.
+Immutable dataset registry — every Parquet artifact must be registered before use in backtesting.
 
 * `dataset_record.py` — `DatasetRecord` + `VerificationRecord`, canonical Arrow IPC hash, `write_and_register()` atomic
 * `lineage_registry.py` — Append-only JSONL, `as_of()` PIT query, orphan sweep
@@ -653,16 +656,16 @@ Immutable dataset registry — mọi Parquet artifact đều phải đăng ký t
 
 #### M-D1: Raw Data Ingestion (`dong_co_du_lieu/thu_thap/` — 10 new modules)
 
-Nhận bar từ WS/REST → QC → buffer settlement → write Parquet → register M-D0.
+Receives bars from WS/REST → QC → buffer settlement → write Parquet → register with M-D0.
 
 * **WebSocket Gateway** (Binance, OKX, Bybit): `binance_ws.py`, `okx_ws.py`, `bybit_ws.py`
 * **REST API Pollers**: OI (5m), Funding (1h), L/S Ratio (5m), Klines (1m), On-chain (CryptoQuant)
 * `bar_processor.py` — `compute_dq_flags()` 4-bit bitmask, `attach_oi_to_bar()` (INV-D1.11 >= boundary), `write_parquet_atomic()`
 * `settlement_buffer.py` — T+5min funding buffer + persistent spool (int64 serialized as string, INV-D1.24)
-* `dead_letter_queue.py` — Rolling 1h window per-exchange, alert khi rate > 1% và > 100 msgs
+* `dead_letter_queue.py` — Rolling 1h window per-exchange, alert when rate > 1% and > 100 msgs
 * `funding_interval_cache.py` — Settlement minutes cache (minutes not hours, INV-D1.5), Bybit stale detection
-* `liquidation_aggregator.py` — Thread-safe per-bar aggregation của `LiquidationEvent`
-* `aux_parquet_writer.py` — Long/Short ratio + On-chain Parquet riêng biệt
+* `liquidation_aggregator.py` — Thread-safe per-bar aggregation of `LiquidationEvent`
+* `aux_parquet_writer.py` — Long/Short ratio + On-chain Parquet separate writers
 * `schema_validator.py` — 3 schemas: OHLCV (17 cols), Long/Short (7 cols), On-chain (6 cols)
 * `startup_routines.py` — Orphan scan + SIGTERM handler
 
@@ -671,15 +674,15 @@ Nhận bar từ WS/REST → QC → buffer settlement → write Parquet → regis
 
 #### M-D2: Gap Reconciliation (`dong_co_du_lieu/xu_ly_lo/` — 8 files)
 
-Nightly batch chạy lúc 02:00 UTC, nhận raw bars từ M-D1 → phát hiện gaps → fill từ REST → gán `data_quality` → merge funding rates → ghi clean Parquet.
+Nightly batch running at 02:00 UTC, receives raw bars from M-D1 → detects gaps → fills from REST → assigns `data_quality` → merges funding rates → writes clean Parquet.
 
-* `reconcile.py` — Orchestrator 7 bước: daemon heartbeat check → lifecycle → maintenance windows → gap manifest → fill/classify → funding merge → atomic write + coverage report
+* `reconcile.py` — 7-step orchestrator: daemon heartbeat check → lifecycle → maintenance windows → gap manifest → fill/classify → funding merge → atomic write + coverage report
 * `schema_validator.py` — `MD2_SCHEMA` explicit PyArrow (26 columns), `write_with_schema_version()` atomic, schema_version=1 mandatory
-* `maintenance_event_logger.py` — Daemon poll exchange status mỗi 5min → `maintenance_log_{date}.parquet` + `daemon_heartbeat.json`; stale > 15min → quality=3
-* `gap_detector.py` — Missing bar scan + zombie volume detection (MAD robust_zscore, two-tail, baseline từ history only — không look-ahead); gap manifest immutable detection fields
-* `rest_filler.py` — `fill_gap() → (DataFrame, quality, reason)` với reason authoritative cho fill_outcome; intra-gap continuity (4 checks) + boundary validation symmetric; HTTP 418/429 backoff
-* `quality_tagger.py` — `data_quality` 0–4; daemon stale → mark bars với quality=3 (không skip); `compute_coverage_report()` aggregate từ batch runner
-* `reconcile_funding_rates.py` — `funding_rate_raw` + anti-lookahead (`funding_published_ns ≤ close_time_ns`); `received_ns` set sau response; `_check_funding_cache_freshness()` trong `load_funding_schedule()`; FAIL LOUD nếu cache miss
+* `maintenance_event_logger.py` — Daemon poll exchange status every 5min → `maintenance_log_{date}.parquet` + `daemon_heartbeat.json`; stale > 15min → quality=3
+* `gap_detector.py` — Missing bar scan + zombie volume detection (MAD robust_zscore, two-tail, baseline from history only — no look-ahead); gap manifest immutable detection fields
+* `rest_filler.py` — `fill_gap() → (DataFrame, quality, reason)` with reason authoritative for fill_outcome; intra-gap continuity (4 checks) + symmetric boundary validation; HTTP 418/429 backoff
+* `quality_tagger.py` — `data_quality` 0–4; daemon stale → mark bars with quality=3 (not skip); `compute_coverage_report()` aggregate from batch runner
+* `reconcile_funding_rates.py` — `funding_rate_raw` + anti-lookahead (`funding_published_ns ≤ close_time_ns`); `received_ns` set after response; `_check_funding_cache_freshness()` in `load_funding_schedule()`; FAIL LOUD on cache miss
 
 **Output:** `ho_du_lieu/da_xu_ly/` (clean bars, 26 cols) | `ho_du_lieu/gap_manifest/` (audit) | `ho_du_lieu/bao_cao_phu_song/` (daily coverage)
 
@@ -688,39 +691,39 @@ Nightly batch chạy lúc 02:00 UTC, nhận raw bars từ M-D1 → phát hiện 
 
 #### M-D3: Point-in-Time Universe Manager (`dong_co_du_lieu/xu_ly_lo/` — 3 files)
 
-**Anti-survivorship-bias module quan trọng nhất.** Quản lý universe theo `known_at` semantics: `get_universe(date)` chỉ include assets mà KAIROS biết trước 00:00 UTC của ngày đó.
+**The most critical anti-survivorship-bias module.** Manages the universe using `known_at` semantics: `get_universe(date)` only includes assets that KAIROS knew about before 00:00 UTC of that date.
 
-* `pit_universe.py` — `make_asset_id()` UUID v5 per listing event (deterministic, tránh ticker collision LUNA/LUNA2); `AssetRegistry` SQLite (6 tables, WAL mode, write-once trigger); `PiTUniverseManager.get_universe()` / `get_universe_history()` / `get_asset_id()`; `build_daily_snapshot()` eligibility formula (ADV, OI, coverage, funding dysfunction, stablecoin); `process_exchange_poll()` listing/delist detection; circuit breaker >50% universe missing; `pit_audit()` verify INV-D3.1/D3.2/D3.3/D3.20
-* `symbol_remapper.py` — `apply_rename()` RENAME: asset_id GIỮNGUYÊN; `apply_fork()` FORK: new asset_id; `flag_ambiguous_rename()` → review queue JSONL cho manual review
-* `seed_sector_assignments.py` — One-time seeder: `cau_hinh/sector_map.yaml` → `sector_assignments` table; explicit override cho LUNA-style ticker collision
+* `pit_universe.py` — `make_asset_id()` UUID v5 per listing event (deterministic, avoids ticker collision LUNA/LUNA2); `AssetRegistry` SQLite (6 tables, WAL mode, write-once trigger); `PiTUniverseManager.get_universe()` / `get_universe_history()` / `get_asset_id()`; `build_daily_snapshot()` eligibility formula (ADV, OI, coverage, funding dysfunction, stablecoin); `process_exchange_poll()` listing/delist detection; circuit breaker > 50% universe missing; `pit_audit()` verify INV-D3.1/D3.2/D3.3/D3.20
+* `symbol_remapper.py` — `apply_rename()` RENAME: asset_id PRESERVED; `apply_fork()` FORK: new asset_id; `flag_ambiguous_rename()` → review queue JSONL for manual review
+* `seed_sector_assignments.py` — One-time seeder: `cau_hinh/sector_map.yaml` → `sector_assignments` table; explicit override for LUNA-style ticker collision
 
-**Lifecycle (Phase 0):** `ACTIVE` → `SUSPECTED_DELIST` → `DELISTED` (terminal). False alarm: `SUSPECTED_DELIST` → `ACTIVE`. Dual condition confirm: ≥3 polls + ≥12h wall-clock.
+**Lifecycle (Phase 0):** `ACTIVE` → `SUSPECTED_DELIST` → `DELISTED` (terminal). False alarm: `SUSPECTED_DELIST` → `ACTIVE`. Dual condition confirmation: ≥3 polls + ≥12h wall-clock.
 
 **Output:** `ho_du_lieu/lich_su_vu_tru/{date}__{built_at}.parquet` (versioned immutable) + `manifest.json` (append-only)
 * **Tests:** 32 unit tests (`test/test_d3_pit_universe.py`) — T-D3.1 → T-D3.30
 
-#### M-D4: Feature Cache (xu_ly_lo/ + khung_alpha/ — 5 files)
+#### M-D4: Feature Cache (`xu_ly_lo/` + `khung_alpha/` — 5 files)
 
-Pre-compute và cache feature matrices. Cache invalidated by feature logic hash khi logic thay đổi.
+Pre-computes and caches feature matrices. Cache is invalidated by feature logic hash when logic changes.
 
-* `khung_alpha/feature_spec.py` — `FeatureSpec` frozen dataclass (11 fields); `FEATURE_SPECS` 12 entries (return_1h/4h, funding_raw/z, oi_1h/4h, volume_ratio, basis, btc_neutral_1h/4h, spread, book_pressure); DAG cycle validation tại import time (INV-D4.24)
-* `khung_alpha/feature_registry.py` — `FEATURE_REGISTRY` 12 module-level `FeatureFn`; Winsorize [1%,99%] rolling 90d cho return_1h/4h; 5×IQR outlier flag cho funding_raw + oi_change; Welford expanding z-score funding_z_30d (INV-D4.19); Rolling OLS 504 bars btc_neutral + BTC 20% coverage check (INV-D4.22); Phase 0 L2 features: `warm=True` ngay tại bar 1, return NaN (INV-D4.27); `IncrementalFeatureEngine` topo-sort + sync-emit + inject_context (INV-D4.28); `FeatureSpecRegistry` — M-D0 PIT Verifier bridge
+* `khung_alpha/feature_spec.py` — `FeatureSpec` frozen dataclass (11 fields); `FEATURE_SPECS` 12 entries (return_1h/4h, funding_raw/z, oi_1h/4h, volume_ratio, basis, btc_neutral_1h/4h, spread, book_pressure); DAG cycle validation at import time (INV-D4.24)
+* `khung_alpha/feature_registry.py` — `FEATURE_REGISTRY` 12 module-level `FeatureFn`; Winsorize [1%,99%] rolling 90d for return_1h/4h; 5×IQR outlier flag for funding_raw + oi_change; Welford expanding z-score funding_z_30d (INV-D4.19); Rolling OLS 504 bars btc_neutral + BTC 20% coverage check (INV-D4.22); Phase 0 L2 features: `warm=True` at bar 1, return NaN (INV-D4.27); `IncrementalFeatureEngine` topo-sort + sync-emit + inject_context (INV-D4.28); `FeatureSpecRegistry` — M-D0 PIT Verifier bridge
 * `xu_ly_lo/feature_cache.py` — `compute_feature_logic_hash()` SHA-256(AST bundle); 12-char `cache_hash`; `write_cache()` atomic + provenance metadata (INV-D4.21/23); `FeatureCache.get_or_compute()` idempotent, BTC-first ordering, stale context fix
-* `xu_ly_lo/pre_aggregate_l2.py` — `L2Snapshot` binary encode/decode; `store_raw_snapshot()` append daily `.bin` (**KHÔNG BAO GIỜ delete**); OFI formula Cont-Kukanov-Stoikov 2014; `compute_book_pressure_5min()` 12 windows, <6 → NaN (INV-D4.11b)
+* `xu_ly_lo/pre_aggregate_l2.py` — `L2Snapshot` binary encode/decode; `store_raw_snapshot()` append daily `.bin` (**NEVER delete**); OFI formula Cont-Kukanov-Stoikov 2014; `compute_book_pressure_5min()` 12 windows, <6 → NaN (INV-D4.11b)
 
 **Cache path:** `ho_du_lieu/kho_dac_trung/offline/{hash_12}/{asset_id}__{start}_{end}.parquet`
 
-#### Xử lý dòng (`dong_co_du_lieu/xu_ly_dong/bo_loc/`)
+#### Stream Processing (`dong_co_du_lieu/xu_ly_dong/bo_loc/`)
 
-* `orderbook_engine.py` — Engine đồng bộ L2 Orderbook realtime cho cả 3 sàn. Xử lý snapshot + incremental update.
-* `ohlc_engine.py` — Aggregator tổng hợp OHLCV candles từ raw trades.
+* `orderbook_engine.py` — Real-time L2 Orderbook sync engine for all 3 exchanges. Handles snapshot + incremental updates.
+* `ohlc_engine.py` — Aggregator for assembling OHLCV candles from raw trades.
 
 #### Feature Registry (`dong_co_du_lieu/ong_dan_dac_trung/online/feature_registry.py`)
 
-File **293 dòng**. Trong hệ thống ML, tính năng A có thể phụ thuộc tính năng B và C. Thay vì duyệt qua cây phụ thuộc (dependency graph) mỗi khi có tick mới — việc này tốn CPU — Kairos **biên dịch trước đồ thị (Precompiled DAG)** thành một danh sách phẳng ngay lúc khởi động. Lúc chạy, hệ thống chỉ việc loop qua danh sách này:
+**293 lines**. In an ML system, feature A may depend on features B and C. Instead of traversing the dependency graph every time a new tick arrives — which is CPU-expensive — Kairos **pre-compiles the DAG (Precompiled DAG)** into a flat list at startup. At runtime, the system simply iterates through this list:
 
 ```python
-# feature_registry.py — Chạy MỘT LẦN khi khởi động
+# feature_registry.py — Executed ONCE at startup
 def compile_dag() -> dict[int, CompiledPlan]:
     """Converts the DAG into flat CompiledPlan tuples keyed by event_type_id.
     Runtime cost per tick: one dict lookup + iteration over ≤5 CompiledSteps.
@@ -734,10 +737,10 @@ def compile_dag() -> dict[int, CompiledPlan]:
     return plans
 ```
 
-**6 Alpha Features được tính toán realtime**:
+**6 Alpha Features computed in real-time**:
 
-| Index | Feature | Công thức toán học | Trigger |
-|-------|---------|-------------------|---------|
+| Index | Feature | Mathematical Formula | Trigger |
+|-------|---------|---------------------|---------|
 | 0 | `MICRO_PRICE` | `(bid_vol × ask + ask_vol × bid) / (bid_vol + ask_vol)` | Orderbook |
 | 1 | `BOOK_PRESSURE` | `bid_vol / (bid_vol + ask_vol)` → Range [0, 1] | Orderbook |
 | 2 | `WELFORD_VAR` | Welford online variance O(1) — `M2 / (n-1)` | Trade |
@@ -745,27 +748,27 @@ def compile_dag() -> dict[int, CompiledPlan]:
 | 4 | `EMA_SLOW` | `α=2/(50+1)` — Recursive EMA 50-period | Trade |
 | 5 | `OFI` | Cont, Kukanov & Stoikov (2014) eq.(1) — `cumsum(e_n^B - e_n^A)` | Orderbook |
 
-**OFI (Order Flow Imbalance)** — Thuật toán tiên tiến theo paper của Cont et al. 2014. Tính toán áp lực mua/bán thuần túy dựa trên biến động của mức giá tốt nhất (best bid/ask), thay vì chỉ nhìn vào khối lượng giao dịch:
+**OFI (Order Flow Imbalance)** — An advanced algorithm based on Cont et al. 2014. Computes net buy/sell pressure based on changes in best bid/ask price levels, rather than simply looking at trade volume:
 
 ```python
 # feature_registry.py — OFI implementation
 def _update_ofi(features, state, payload):
     """Order Flow Imbalance per Cont, Kukanov & Stoikov (2014), eq. (1)."""
     if best_bid > prev_bid:
-        e_bid = bid_vol                         # Giá tăng: toàn bộ volume là cầu mới
+        e_bid = bid_vol                         # Price up: entire volume is new demand
     elif best_bid == prev_bid:
-        e_bid = bid_vol - state.ofi_prev_bid_vol  # Giá đi ngang: chênh lệch volume
+        e_bid = bid_vol - state.ofi_prev_bid_vol  # Price unchanged: volume delta
     else:
-        e_bid = -state.ofi_prev_bid_vol           # Giá giảm: mức giá cũ bị hủy bỏ/khớp hết
+        e_bid = -state.ofi_prev_bid_vol           # Price down: previous level canceled/filled
 
     features[FEATURE_IDX_OFI] = state.ofi_cum_bid_delta - state.ofi_cum_ask_delta
 ```
 
 #### Incremental Engine (`dong_co_du_lieu/ong_dan_dac_trung/online/incremental_engine.py`)
 
-File **353 dòng**. Động cơ thực thi Hot-Path chính. Mọi thiết kế đều hướng đến mục tiêu: **không tạo bất kỳ Python object nào trong vòng lặp**.
+**353 lines**. The primary hot-path execution engine. Every design decision targets a single goal: **create zero Python objects within the loop**.
 
-**Dispatch Table O(1)** — Thông thường, để rẽ nhánh xử lý loại dữ liệu (Trade, Orderbook, Liquidation), lập trình viên dùng chuỗi `if/elif/else`. Trong HFT, việc này tốn chu kỳ CPU cho Branch Prediction. Kairos giải quyết bằng mảng con trỏ hàm:
+**O(1) Dispatch Table** — Typically, to branch on event type (Trade, Orderbook, Liquidation), developers use `if/elif/else` chains. In HFT, this costs CPU cycles for Branch Prediction. Kairos solves this with a function pointer array:
 
 ```python
 # incremental_engine.py — Zero-branch routing
@@ -776,24 +779,24 @@ self._dispatch = [
     self._handle_mark_price,   # 3: EVT_MARK_PRICE
     self._handle_rest,         # 4: EVT_REST
 ]
-# Hot-path: một lần dereference mảng → gọi hàm
+# Hot-path: single array dereference → function call
 return self._dispatch[event_type_id](symbol_id, ...)
 ```
 
-**Object Pool (Ring Buffer)** — Pre-allocate 16,384 slots × 192 bytes = ~3.1 MB trong L3 cache:
+**Object Pool (Ring Buffer)** — Pre-allocate 16,384 slots × 192 bytes = ~3.1 MB in L3 cache:
 
 ```python
-# Pool tĩnh — KHÔNG allocation sau __init__
+# Static pool — NO allocation after __init__
 POOL_SIZE = 16_384   # power-of-2
 self._pool = [make_empty_raw() for _ in range(POOL_SIZE)]
-# Pre-compute numpy views — np.frombuffer chỉ gọi 1 lần
+# Pre-compute numpy views — np.frombuffer called only once
 self._pool_views = [
     np.frombuffer(self._pool[i].features, dtype=np.float64)
     for i in range(POOL_SIZE)
 ]
 ```
 
-**ScratchPayload** — Thay thế `dict` bằng `@dataclass(slots=True)` tái sử dụng:
+**ScratchPayload** — Replaces `dict` with a reusable `@dataclass(slots=True)`:
 
 ```python
 @dataclass(slots=True)
@@ -810,25 +813,25 @@ class ScratchPayload:
         return getattr(self, key)   # Dict-compatible interface
 ```
 
-**Transactional State Update** — Mô hình giao dịch ngăn data corruption:
+**Transactional State Update** — A transactional model to prevent data corruption:
 
 ```python
 def _run_plan(self, symbol_id, event_type_id, exchange_ts, receive_ts):
-    # 1. Borrow pool slot; seed features từ store qua memmove
+    # 1. Borrow pool slot; seed features from store via memmove
     ctypes.memmove(
         ctypes.addressof(raw.features),
         self._sym_src_ptrs[symbol_id],   # Pre-computed pointer
         _FEAT_BYTES,                      # 128 bytes, ~0.05µs
     )
 
-    # 2. Snapshot SymbolState vào scratch (no allocation)
+    # 2. Snapshot SymbolState into scratch (no allocation)
     _copy_state(state, scratch)
 
-    # 3. Execute update_fns trên draft_view (NOT live store)
+    # 3. Execute update_fns on draft_view (NOT the live store)
     for step in plan:
         step.update_fn(draft_view, state, payload)
 
-    # 4. Gate: commit to store — nếu bị reject, rollback
+    # 4. Gate: commit to store — if rejected, rollback
     if not self._store.commit_raw(raw):
         _copy_state(scratch, state)   # Rollback — zero allocation
         return None
@@ -838,36 +841,36 @@ def _run_plan(self, symbol_id, event_type_id, exchange_ts, receive_ts):
 
 ---
 
-### 3.4. Trí Tuệ Nhân Tạo & MLOps (Machine Learning) [WIP]
+### 3.4. Machine Learning & MLOps [WIP]
 
-Bộ não của hệ thống. Trong khi các quy tắc rủi ro và thực thi lệnh được viết bằng code tĩnh, logic dự đoán giá được giao hoàn toàn cho các mô hình Machine Learning.
+The brain of the system. While risk rules and order execution are written in static code, price prediction logic is entirely delegated to Machine Learning models.
 
-* **Tối ưu suy luận (ONNX/TensorRT)**: Thư viện PyTorch rất tốt để huấn luyện (`hoc_may/huan_luyen/`), nhưng nó chứa quá nhiều overhead, không đủ nhanh để đưa ra quyết định trong vài chục microsecond. Do đó, sau khi train xong, model được xuất ra định dạng ONNX và chạy suy luận (`hoc_may/suy_luan/`) thông qua ONNX Runtime (viết bằng C++) hoặc TensorRT (tối ưu phần cứng GPU/NPU), giúp giảm độ trễ xuống mức giới hạn vật lý.
-* **Tổ hợp Alpha (`hoc_may/to_hop_alpha/`)**: Một mô hình duy nhất hiếm khi chiến thắng thị trường trong dài hạn. Kairos sử dụng kỹ thuật Ensemble — kết hợp hàng chục/trăm tín hiệu nhỏ lẻ (ví dụ: 1 mô hình soi funding rate, 1 mô hình soi orderbook, 1 mô hình soi on-chain) thành một quyết định giao dịch thống nhất.
-* **Giám sát mô hình (MLOps)**: Thị trường Crypto có tính thay đổi chế độ (regime shift) rất cao. Một mô hình đang lãi đậm hôm nay có thể lỗ sấp mặt vào ngày mai vì "khẩu vị" của thị trường đã đổi. Do đó, hệ thống MLOps (`giam_sat_mo_hinh/`) phải hoạt động liên tục 24/7:
-  * `sai_lech_dac_trung/` (Feature Drift): Phát hiện ngay lập tức khi phân phối của dữ liệu đầu vào khác biệt so với lúc train.
-  * `sai_lech_du_doan/` (Prediction Drift): Theo dõi độ chính xác. Nếu model bắt đầu đoán sai liên tục, hệ thống sẽ tự động kích hoạt Circuit Breaker cắt quyền giao dịch của model đó trước khi nó gây lỗ nặng.
+* **Inference Optimization (ONNX/TensorRT)**: PyTorch is excellent for training (`hoc_may/huan_luyen/`), but it carries too much overhead to deliver decisions within tens of microseconds. Therefore, after training, models are exported to ONNX format and inference (`hoc_may/suy_luan/`) runs through ONNX Runtime (written in C++) or TensorRT (GPU/NPU hardware-optimized), reducing latency to near physical limits.
+* **Alpha Ensemble (`hoc_may/to_hop_alpha/`)**: A single model rarely beats the market long-term. Kairos uses Ensemble techniques — combining dozens/hundreds of small signals (e.g., one model analyzing funding rates, one analyzing orderbooks, one analyzing on-chain data) into a unified trading decision.
+* **Model Monitoring (MLOps)**: Crypto markets exhibit extremely high regime shift characteristics. A model generating strong profits today may incur heavy losses tomorrow because the market's "appetite" has changed. Therefore, the MLOps system (`giam_sat_mo_hinh/`) must operate continuously 24/7:
+  * `sai_lech_dac_trung/` (Feature Drift): Instantly detects when input data distribution diverges from the training distribution.
+  * `sai_lech_du_doan/` (Prediction Drift): Monitors accuracy. If a model begins producing consistently incorrect predictions, the system automatically triggers a Circuit Breaker to revoke that model's trading privileges before it causes heavy losses.
 
 ---
 
-### 3.5. Thực Thi Chiến Dịch (Execution Core)
+### 3.5. Execution Core
 
-**Trách nhiệm:** Nhận `SignalEvent` từ ZMQ bus, qua 7 pre-trade gates, đẩy vào SPSC ring buffer, worker sizing lệnh và submit qua EMS. File chính `vong_lap_su_kien.py` — 1105 dòng.
+**Responsibility:** Receives `SignalEvent` from the ZMQ bus, passes through 7 pre-trade gates, pushes into the SPSC ring buffer, where the worker sizes the order and submits via EMS. Primary file: `vong_lap_su_kien.py` — 1105 lines.
 
-**Hợp đồng hiệu năng:** signal-to-ring-write < 10µs (Thread 1 hot-path, GC disabled). ring-read-to-HTTP-submit latency không bị bounded (network dependent).
+**Performance contract:** signal-to-ring-write < 10µs (Thread 1 hot-path, GC disabled). ring-read-to-HTTP-submit latency is unbounded (network dependent).
 
 
-#### ExitCoordinator — Quản Lý Thoát Vị Thế
+#### ExitCoordinator — Position Exit Management
 
-`ExitCoordinator` (`thoat_vi_the/exit_coordinator.py`, 411 dòng) là state machine per-symbol vận hành trên Thread 2 event loop, chịu trách nhiệm hoàn toàn cho việc đóng vị thế. Khi Thread 3 nhận MarkPrice mới, nó gọi `call_soon_threadsafe(ec.on_price_tick, sym, price, ts)` để dispatch vào Thread 2 — không bao giờ block hot-path.
+`ExitCoordinator` (`thoat_vi_the/exit_coordinator.py`, 411 lines) is a per-symbol state machine running on Thread 2's event loop, fully responsible for closing positions. When Thread 3 receives a new MarkPrice, it calls `call_soon_threadsafe(ec.on_price_tick, sym, price, ts)` to dispatch to Thread 2 — never blocking the hot-path.
 
-Mỗi symbol có trạng thái `FLAT → OPEN → CLOSING → PARTIAL → CLOSED → QUARANTINED/ERROR`. Khi một lệnh mở vị thế fill thành công (trong `_fire()`), `on_position_opened()` được gọi để chuyển sang `OPEN`. Mỗi price tick, coordinator đánh giá tất cả exit strategies (FixedPercent, ATR-Based, TrailingStop, Breakeven, PartialExit, TimeBased) và đặt lệnh `MARKET reduce_only=True` trực tiếp qua adapter — **bypassing EMS hoàn toàn** vì lệnh đóng không cần pre-trade risk gate.
+Each symbol has a state `FLAT → OPEN → CLOSING → PARTIAL → CLOSED → QUARANTINED/ERROR`. When an open-position order fills successfully (in `_fire()`), `on_position_opened()` is called to transition to `OPEN`. On each price tick, the coordinator evaluates all exit strategies (FixedPercent, ATR-Based, TrailingStop, Breakeven, PartialExit, TimeBased) and places a `MARKET reduce_only=True` order directly via the adapter — **completely bypassing the EMS** since close orders do not require the pre-trade risk gate.
 
-`EmergencyFlattener` (`watchdog/emergency_flattener.py`, 374 dòng) là fallback cuối cùng: được Watchdog gọi khi kích hoạt kill switch, đóng tất cả vị thế đang mở trên mọi sàn và ghi `FLATTEN_LOCK` để chặn vĩnh viễn mọi lệnh mới cho đến khi con người can thiệp.
+`EmergencyFlattener` (`watchdog/emergency_flattener.py`, 374 lines) is the last-resort fallback: invoked by the Watchdog when the kill switch is activated, it closes all open positions across all exchanges and writes `FLATTEN_LOCK` to permanently block all new orders until human intervention occurs.
 
-#### Kiến trúc 5-Thread (`ExecutionGateway`)
+#### 5-Thread Architecture (`ExecutionGateway`)
 
-Python GIL được giải phóng tại I/O boundaries (ZMQ recv, HTTP, file write). Mỗi thread chiếm một loại I/O riêng biệt để tối đa hóa parallelism trong giới hạn GIL:
+The Python GIL is released at I/O boundaries (ZMQ recv, HTTP, file write). Each thread occupies a distinct I/O type to maximize parallelism within GIL constraints:
 
 ```
 Thread 1  HOT PATH     ZMQ SUB(5557) → versioned ring buffer + risk commit
@@ -877,21 +880,21 @@ Thread 4  BOUND LOGGER queue.Queue(5000) drain → Python logging
 Thread 5  WATCHDOG HB  ZMQ PUB(5559) + file mtime touch → dual-channel heartbeat
 ```
 
-* **Thread 1 (Hot-Path)**: Nhận tín hiệu từ ZMQ, kiểm tra xem tín hiệu có còn "tươi" không, qua 7 cửa chặn an toàn, rồi đẩy vào Ring Buffer. Thread này tuyệt đối KHÔNG được tạo bất kỳ Python object nào — vì chỉ cần 1 lần GC pause là tín hiệu bị cũ.
-* **Thread 2 (Worker)**: Chờ data từ Ring Buffer, tính kích thước lệnh, rồi gửi lên sàn qua HTTP API. Chạy asyncio event loop để xử lý tối đa 50 HTTP request song song.
-* **Thread 3 (Price Oracle)**: Liên tục cập nhật bảng giá MarkPrice cho tất cả symbol. Thread 1 tra cứu bảng giá này để tính giá trị USD của lệnh.
-* **Thread 4 (Logger)**: Thread 1 và Thread 2 không bao giờ gọi `logging` trực tiếp (vì logging acquire lock). Thay vào đó, chúng đẩy message vào `queue.Queue(5000)`, Thread 4 lấy ra và ghi log.
-* **Thread 5 (Watchdog Heartbeat)**: Gửi tín hiệu "tôi còn sống" định kỳ qua 2 kênh. Nếu Watchdog không nhận được → giết process.
+* **Thread 1 (Hot-Path)**: Receives signals from ZMQ, checks signal freshness, passes through 7 safety gates, then pushes to the Ring Buffer. This thread absolutely MUST NOT create any Python objects — a single GC pause renders the signal stale.
+* **Thread 2 (Worker)**: Waits for data from the Ring Buffer, computes order size, then submits to the exchange via HTTP API. Runs an asyncio event loop to handle up to 50 concurrent HTTP requests.
+* **Thread 3 (Price Oracle)**: Continuously updates the MarkPrice table for all symbols. Thread 1 queries this table to compute USD values for orders.
+* **Thread 4 (Logger)**: Thread 1 and Thread 2 never call `logging` directly (because logging acquires a lock). Instead, they push messages to `queue.Queue(5000)`, and Thread 4 drains and writes logs.
+* **Thread 5 (Watchdog Heartbeat)**: Periodically sends "I'm alive" signals via 2 fully independent channels. If the Watchdog doesn't receive them → kill the process.
 
 #### Thread 1: Hot-Path — Zero-Allocation Receive
 
-**Invariants:** `gc.disable()` trước khi vào loop. Tất cả object (recv buffer, ctypes overlay, ring slots) pre-allocated tại `__init__`. Zero allocation trong hot loop.
+**Invariants:** `gc.disable()` before entering the loop. All objects (recv buffer, ctypes overlay, ring slots) pre-allocated at `__init__`. Zero allocation in the hot loop.
 
-**Pre-allocated ZMQ receive buffer** — 64-byte `bytearray` với ctypes overlay, tái sử dụng mỗi signal:
+**Pre-allocated ZMQ receive buffer** — 64-byte `bytearray` with ctypes overlay, reused for every signal:
 
 ```python
 # thuc_thi_lenh/vong_lap_su_kien.py — Thread 1
-gc.disable()   # ← CRITICAL: Tắt GC trên hot-path
+gc.disable()   # ← CRITICAL: Disable GC on hot-path
 
 # Pre-allocate recv buffer + ctypes overlay — zero-alloc recv
 self._recv_buf    = bytearray(64)
@@ -901,7 +904,7 @@ self._recv_sig    = _SignalEventRaw.from_buffer(self._recv_buf)
 while not stop_event.is_set():
     # ── 1. Zero-alloc recv ──
     msg = sub.recv(copy=False)           # Frame buffer protocol
-    ctypes.memmove(recv_ctypes, msg.bytes, 64)  # Copy trực tiếp qua pointer
+    ctypes.memmove(recv_ctypes, msg.bytes, 64)  # Direct pointer copy
 
     # ── 2. Staleness check (<5ms) ──
     if time.perf_counter_ns() - recv_sig.signal_ts > 5_000_000:
@@ -924,51 +927,51 @@ while not stop_event.is_set():
         self._drop("flow_bp"); continue
 ```
 
-Mỗi signal được copy 64 bytes vào recv buffer bằng `ctypes.memmove` (zero allocation), sau đó qua 7 gates theo thứ tự. Gate đầu tiên fail → drop ngay, không evaluate tiếp.
+Each signal is copied as 64 bytes into the recv buffer via `ctypes.memmove` (zero allocation), then passes through 7 gates in sequence. First gate to fail → immediate drop, no further evaluation.
 
-> Đây là trade-off `correctness vs latency` cần đọc thật kỹ. Cơ chế drop chỉ phù hợp khi việc bỏ event không làm sai quyết định giao dịch hoặc hệ thống có sequencing/gap detection để phát hiện trạng thái đã degraded.
+> This is a `correctness vs latency` trade-off that requires careful reading. The drop mechanism is only appropriate when discarding an event does not corrupt trading decisions, or the system has sequencing/gap detection to identify degraded state.
 
-**7 cửa chặn (Gate)** — Triết lý "Fail Fast": vứt bỏ càng sớm càng tốt, chỉ xử lý tín hiệu thực sự hợp lệ. Mỗi tín hiệu phải vượt qua TẤT CẢ 7 cửa mới được chuyển thành lệnh:
+**7 Safety Gates** — "Fail Fast" philosophy: discard as early as possible, only process genuinely valid signals. Each signal must pass ALL 7 gates to be converted into an order:
 
-| Gate | Mục đích | Giải thích | Hành vi khi thất bại |
-|------|----------|-----------|---------------------|
-| Staleness | Signal cũ hơn 5ms | Thị trường crypto biến động cực nhanh. Tín hiệu 5ms tuổi đã mất giá trị vì giá có thể đã thay đổi đáng kể. | Drop + log |
-| Circuit Breaker | ≥5 lỗi adapter liên tiếp | Nếu sàn giao dịch đang gặp sự cố (API timeout, rate limit), tiếp tục gửi lệnh chỉ làm tình hình tệ hơn. Tạm dừng 5 giây để sàn hồi phục. | Block 5 giây |
-| Symbol Lookup | Symbol không tồn tại | Tín hiệu cho cặp tiền chưa được đăng ký → không thể giao dịch. | Drop |
-| Price Check | Chưa có MarkPrice | Không thể tính kích thước lệnh (USDT → quantity) nếu chưa biết giá hiện tại. | Drop |
-| Ring Lag | Worker chậm ≥50% ring | Thread 2 đang xử lý chậm (sàn lag?). Nếu tiếp tục nhồi data vào ring buffer sẽ tràn → mất data. | Drop |
-| Flow Backpressure | Pressure > 70% | Toàn hệ thống đang quá tải (queues gần đầy). Giảm lượng input để tránh sập. | Drop |
-| Risk Gate | Pre-trade risk check | Kiểm tra rủi ro cuối cùng: vượt giới hạn lỗ? Quá nhiều lệnh mở? Lệnh trùng? | Rollback + drop |
+| Gate | Purpose | Explanation | Failure Behavior |
+|------|---------|-------------|-----------------|
+| Staleness | Signal older than 5ms | Crypto markets move extremely fast. A 5ms-old signal has lost value because prices may have already changed significantly. | Drop + log |
+| Circuit Breaker | ≥5 consecutive adapter errors | If the exchange is experiencing issues (API timeout, rate limit), continuing to send orders only worsens the situation. Pause 5 seconds to let the exchange recover. | Block 5 seconds |
+| Symbol Lookup | Symbol not registered | Signal for an unregistered trading pair → cannot trade. | Drop |
+| Price Check | No MarkPrice available | Cannot compute order size (USDT → quantity) without knowing the current price. | Drop |
+| Ring Lag | Worker ≥50% ring behind | Thread 2 is processing slowly (exchange lag?). Continuing to push data into the ring buffer risks overflow → data loss. | Drop |
+| Flow Backpressure | Pressure > 70% | The entire system is overloaded (queues near capacity). Reduce input to prevent crash. | Drop |
+| Risk Gate | Pre-trade risk check | Final risk check: exceeded loss limits? Too many open orders? Duplicate orders? | Rollback + drop |
 
 #### Thread 1 → Thread 2: SPSC Versioned Ring Buffer
 
-Sau khi tín hiệu vượt qua 7 cửa chặn, nó cần được "chuyển giao" từ Thread 1 sang Thread 2 để thực thi. Vấn đề: làm sao 2 thread giao tiếp mà không dùng Lock (vì Lock tốn ~200ns mỗi lần acquire/release)?
+After a signal passes all 7 gates, it must be "handed off" from Thread 1 to Thread 2 for execution. The challenge: how do 2 threads communicate without using a Lock (which costs ~200ns per acquire/release)?
 
-Giải pháp là **Versioned Ring Buffer** — một mảng vòng tròn 256 slots. Thread 1 ghi data vào slot, rồi tăng số version lên 1. Thread 2 liên tục kiểm tra version — khi thấy version tăng, biết có data mới. Không cần Lock vì chỉ có 1 writer (Thread 1) và 1 reader (Thread 2):
+The solution is a **Versioned Ring Buffer** — a circular array of 256 slots. Thread 1 writes data to a slot, then increments the version number by 1. Thread 2 continuously checks the version — when it sees the version increment, it knows new data is available. No Lock is needed because there is only 1 writer (Thread 1) and 1 reader (Thread 2):
 
-> Assumption `SPSC` này phải được giữ thật chặt. Nếu sau này có thêm producer khác (retry path, reconciler injector, daemon phụ) cùng ghi vào ring, cấu trúc hiện tại không còn an toàn và cần runtime assert hoặc chuyển sang `MPSC/MPMC`.
+> This `SPSC` assumption must be strictly maintained. If additional producers (retry path, reconciler injector, auxiliary daemon) are later added to write to the ring, the current structure is no longer safe and requires either runtime assertions or migration to `MPSC/MPMC`.
 
 ```python
 # Slot definition — SPSC (Single Producer Single Consumer)
 @dataclass
 class _RingSlot:
     data:    _SignalEventRaw
-    version: ctypes.c_int64    # Writer += 1 sau khi ghi xong
+    version: ctypes.c_int64    # Writer += 1 after write completes
 
-# Thread 1: Ghi vào ring — 0 allocation
-ring_pos = write_idx & ring_mask         # Bit-mask thay modulo (nhanh hơn)
+# Thread 1: Write to ring — 0 allocation
+ring_pos = write_idx & ring_mask         # Bit-mask instead of modulo (faster)
 slot     = ring[ring_pos]
 ctypes.memmove(ctypes.addressof(slot.data), recv_ctypes, 64)  # Copy 64B
-slot.version.value += 1   # "Xuất bản" cho Thread 2: data đã sẵn sàng
+slot.version.value += 1   # "Publish" to Thread 2: data is ready
 ```
 
 #### Thread 2: Exec Worker — Hybrid Spin-Wait
 
-Thread 2 là nơi lệnh thực sự được gửi lên sàn. Nó chờ data từ Ring Buffer bằng kỹ thuật **Hybrid Spin-Wait**: quay vòng kiểm tra 100 lần (spin) → nếu chưa có data → nhường quyền cho event loop (`await asyncio.sleep(0)`) → lặp lại. Kỹ thuật này cân bằng giữa độ trễ thấp (spin nhanh khi có data) và tiết kiệm CPU (nhường khi không có gì).
+Thread 2 is where orders are actually submitted to the exchange. It waits for data from the Ring Buffer using a **Hybrid Spin-Wait** technique: spin-check 100 times → if no data → yield to the event loop (`await asyncio.sleep(0)`) → repeat. This technique balances low latency (fast spin when data is available) with CPU efficiency (yield when idle).
 
-> Với mô hình `thread + asyncio`, thứ tự event đi vào ring không tự động đồng nghĩa với thứ tự request hoàn tất hoặc side effect external xuất hiện. Nếu downstream logic phụ thuộc ordering chặt, production flow cần thêm `sequence ownership`, execution queue ordering rõ ràng, hoặc idempotent reconciliation thay vì giả định `arrival order ~= execution order`.
+> With the `thread + asyncio` model, the order in which events enter the ring does not automatically correspond to the order in which requests complete or external side effects appear. If downstream logic depends on strict ordering, production flows need additional `sequence ownership`, explicit execution queue ordering, or idempotent reconciliation rather than assuming `arrival order ~= execution order`.
 
-Sau khi nhận được tín hiệu, Thread 2 tính kích thước lệnh bằng `Decimal` (không dùng `float` vì sai số thập phân có thể khiến lệnh bị sàn từ chối — ví dụ BTC lot_size = 0.001, nếu float tính ra 0.0019999999 sẽ bị reject):
+After receiving a signal, Thread 2 computes order size using `Decimal` (not `float`, because decimal precision errors can cause orders to be rejected by the exchange — for example, BTC lot_size = 0.001; if float computes 0.0019999999, the order is rejected):
 
 ```python
 # thuc_thi_lenh/vong_lap_su_kien.py — Thread 2
@@ -978,7 +981,7 @@ async def _worker_loop(self):
     while not stop_event.is_set():
         slot = ring[read_idx & ring_mask]
 
-        # ── Hybrid spin-wait: spin 100 lần → yield → lặp lại ──
+        # ── Hybrid spin-wait: spin 100 times → yield → repeat ──
         spin = 0
         while slot.version.value != expected:
             spin += 1
@@ -987,7 +990,7 @@ async def _worker_loop(self):
                 await asyncio.sleep(0)   # yield event loop
             if stop_event.is_set(): return
 
-        # ── Sizing: dùng Decimal để tránh float epsilon ──
+        # ── Sizing: use Decimal to avoid float epsilon ──
         qty_step_d = Decimal(str(cfg.qty_step))
         steps      = int((order_usdt / price) / cfg.qty_step)
         qty        = float(qty_step_d * steps)
@@ -995,140 +998,140 @@ async def _worker_loop(self):
 
 #### Thread 5: Watchdog Heartbeat — Dual-Channel
 
-Thread 5 giải quyết câu hỏi: "Làm sao biết bot còn sống?". Mỗi vài giây, nó gửi tín hiệu "heartbeat" qua **2 kênh hoàn toàn độc lập**: ZMQ publish và file system touch. Tại sao 2 kênh? Vì nếu chỉ dùng ZMQ mà ZMQ bị lỗi → Watchdog tưởng bot chết → giết nhầm. Ngược lại nếu chỉ dùng file mà filesystem bị treo → cũng giết nhầm. Cần cả 2 kênh đều mất tín hiệu mới kết luận bot thực sự chết:
+Thread 5 answers the question: "How do we know the bot is still alive?" Every few seconds, it sends a "heartbeat" signal via **2 fully independent channels**: ZMQ publish and file system touch. Why 2 channels? If only ZMQ is used and ZMQ fails → Watchdog assumes the bot is dead → kills it incorrectly. Conversely, if only the file system is used and the filesystem hangs → also kills incorrectly. Both channels must lose signal simultaneously before concluding the bot is truly dead:
 
 ```python
 # thuc_thi_lenh/vong_lap_su_kien.py — Thread 5
 def _heartbeat_loop(self):
     while not stop_event.is_set():
-        # Kênh 1: ZMQ PUB — NOBLOCK để không bị treo nếu Watchdog lag
+        # Channel 1: ZMQ PUB — NOBLOCK to avoid hanging if Watchdog lags
         hb_pub.send_multipart([b"HB", b""], flags=zmq.NOBLOCK)
 
-        # Kênh 2: Chạm file — chỉ cập nhật timestamp, không ghi nội dung
+        # Channel 2: File touch — only update timestamp, no content write
         os.utime(alive_path, None)
 
-        stop_event.wait(interval_s)   # Sleep nhưng có thể bị đánh thức
+        stop_event.wait(interval_s)   # Sleep but can be woken
 ```
 
-#### Durable WAL (`durable_wal.py`) — 290 dòng
+#### Durable WAL (`durable_wal.py`) — 290 lines
 
-**Trách nhiệm:** Ghi nhật ký mutation intent lên đĩa trước khi HTTP request được gửi. Cung cấp `best-known state` sau crash/restart trong phạm vi mutations đã được WAL bao phủ.
+**Responsibility:** Logs mutation intents to disk before the HTTP request is sent. Provides `best-known state` after crash/restart within the scope of mutations covered by the WAL.
 
-**Nguyên lý Write-Ahead:** `ORDER_SENT` entry được append vào WAL trước khi HTTP call được initiated. Sau crash, replay WAL phân biệt `in-flight` (sent, không có fill response) vs `confirmed` vs `unknown`. Ghost-position risk giảm xuống còn trong cửa sổ giữa WAL write và exchange confirmation.
+**Write-Ahead Principle:** An `ORDER_SENT` entry is appended to the WAL before the HTTP call is initiated. After a crash, WAL replay distinguishes `in-flight` (sent, no fill response) vs `confirmed` vs `unknown`. Ghost-position risk is reduced to the window between WAL write and exchange confirmation.
 
-File WAL có kích thước cố định ~4MB, được ánh xạ vào RAM qua `mmap` — ghi vào WAL nhanh như ghi vào RAM, nhưng dữ liệu vẫn an toàn trên đĩa. Mỗi entry WAL có cấu trúc cố định 64 bytes (vừa khít 1 cache line CPU, tối ưu tốc độ đọc/ghi):
+The WAL file has a fixed size of ~4MB, memory-mapped via `mmap` — writing to the WAL is as fast as writing to RAM, but data remains safe on disk. Each WAL entry has a fixed 64-byte structure (exactly 1 CPU cache line, optimized for read/write speed):
 
 ```python
 class _WALEntry(ctypes.LittleEndianStructure):
     _pack_ = 1
     _fields_ = [
-        ("seq_id",       ctypes.c_uint64),    # Số thứ tự tăng dần, không lặp
-        ("timestamp_ns", ctypes.c_int64),      # Thời điểm ghi (nanosecond)
-        ("entry_type",   ctypes.c_uint32),     # Loại sự kiện (enum bên dưới)
-        ("flags",        ctypes.c_uint32),      # Cờ phụ trợ
-        ("payload",      ctypes.c_char * 32),  # Order ID (tối đa 32 ký tự)
-        ("crc32",        ctypes.c_uint32),     # Mã kiểm tra — phát hiện hỏng
-        ("_align",       ctypes.c_uint32),      # Đệm để đạt chính xác 64B
+        ("seq_id",       ctypes.c_uint64),    # Monotonically increasing sequence number
+        ("timestamp_ns", ctypes.c_int64),      # Write timestamp (nanosecond)
+        ("entry_type",   ctypes.c_uint32),     # Event type (enum below)
+        ("flags",        ctypes.c_uint32),      # Auxiliary flags
+        ("payload",      ctypes.c_char * 32),  # Order ID (max 32 characters)
+        ("crc32",        ctypes.c_uint32),     # Integrity check — corruption detection
+        ("_align",       ctypes.c_uint32),      # Padding to reach exactly 64B
     ]   # 8+8+4+4+32+4+4 = 64 bytes
 ```
 
-Mỗi loại sự kiện được đánh dấu rõ ràng. Lưu ý `ORDER_SENT` được ghi **TRƯỚC** khi gửi lệnh — đây chính là "Write-Ahead" (ghi trước):
+Each event type is clearly labeled. Note that `ORDER_SENT` is written **BEFORE** sending the order — this is precisely "Write-Ahead":
 
 ```python
 class WALEntryType(IntEnum):
-    ORDER_SENT      = 1   # Ghi TRƯỚC khi gửi → biết lệnh đang "in-flight"
-    ORDER_FILLED    = 2   # Ghi SAU khi sàn xác nhận khớp
-    ORDER_CANCELLED = 3   # Lệnh đã hủy thành công
-    ORDER_REJECTED  = 4   # Sàn từ chối lệnh
-    ORDER_UNKNOWN   = 5   # Hủy lệnh timeout → trạng thái không xác định
-    POSITION_SNAP   = 6   # Ảnh chụp vị thế định kỳ (backup)
-    PNL_CHECKPOINT  = 7   # Điểm kiểm tra lãi/lỗ
-    RISK_OVERRIDE   = 8   # Can thiệp thủ công vào trạng thái rủi ro
+    ORDER_SENT      = 1   # Written BEFORE sending → identifies in-flight orders
+    ORDER_FILLED    = 2   # Written AFTER exchange confirms fill
+    ORDER_CANCELLED = 3   # Order successfully canceled
+    ORDER_REJECTED  = 4   # Exchange rejected the order
+    ORDER_UNKNOWN   = 5   # Cancel timeout → unknown state
+    POSITION_SNAP   = 6   # Periodic position snapshot (backup)
+    PNL_CHECKPOINT  = 7   # P&L checkpoint
+    RISK_OVERRIDE   = 8   # Manual risk state intervention
 ```
 
-**Cơ chế bảo vệ tính toàn vẹn**: Mỗi entry có trường `crc32` — mã kiểm tra tính toàn vẹn. Khi đọc lại, hệ thống tính lại CRC và so sánh. Nếu khác nhau = dữ liệu bị hỏng (do mất điện giữa chừng ghi). Ngoài ra, `fsync()` được gọi mỗi 64 entries, nhưng các sự kiện quan trọng (`ORDER_SENT`, `RISK_OVERRIDE`) luôn `fsync()` ngay lập tức — đảm bảo dữ liệu đã xuống đĩa vật lý.
+**Integrity protection mechanism**: Each entry has a `crc32` field — an integrity checksum. On read-back, the system recalculates the CRC and compares. If they differ = data is corrupted (due to power loss mid-write). Additionally, `fsync()` is called every 64 entries, but critical events (`ORDER_SENT`, `RISK_OVERRIDE`) always trigger `fsync()` immediately — ensuring data has reached the physical disk.
 
-**Thuật toán Recovery** khi khởi động lại sau sự cố:
-1. **Verify header**: Kiểm tra magic bytes (`b"KAIROS_W"`) — đảm bảo đúng file WAL
-2. **Scan tuần tự**: Đọc từng entry, kiểm tra CRC. Entry đầu tiên có CRC sai = ranh giới hỏng → cắt bỏ phần đuôi corrupt
-3. **Đặt con trỏ**: `seq_next = last_valid_entry.seq_id + 1` — bắt đầu ghi từ sau entry hợp lệ cuối cùng
-4. **Rebuild state**: Replay các entry hợp lệ để khôi phục lại trạng thái in-memory (vị thế, lệnh đang mở, PnL)
+**Recovery algorithm** on restart after a failure:
+1. **Verify header**: Check magic bytes (`b"KAIROS_W"`) — ensure it's a valid WAL file
+2. **Sequential scan**: Read each entry, verify CRC. First entry with a CRC mismatch = corruption boundary → truncate the corrupt tail
+3. **Set write pointer**: `seq_next = last_valid_entry.seq_id + 1` — start writing after the last valid entry
+4. **Rebuild state**: Replay valid entries to restore in-memory state (positions, open orders, PnL)
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/850d2a61-790b-412a-831d-9751e3c78451" />
 
-> Muốn gọi WAL là `truth source` đúng nghĩa, cần thêm 3 điều kiện: mọi mutation state phải đi qua WAL, sequencing phải nhất quán, và replay phải cho ra cùng logical state sau khi đối soát với exchange.
+> To call the WAL a true `truth source`, 3 additional conditions are needed: every state mutation must pass through the WAL, sequencing must be consistent, and replay must produce the same logical state after reconciliation with the exchange.
 
-#### Order Management System (`quan_ly_lenh/`) — 1,114 dòng
+#### Order Management System (`quan_ly_lenh/`) — 1,114 lines
 
-Hệ thống Quản lý Lệnh (OMS) là sổ cái trung tâm: mọi lệnh giao dịch phải được đăng ký, theo dõi, và đóng sổ tại đây trước khi rời khỏi hệ thống. OMS gồm 3 thành phần:
+The Order Management System (OMS) is the central ledger: every trading order must be registered, tracked, and closed here before leaving the system. The OMS consists of 3 components:
 
-* **`order_book.py` (656 dòng)**: Sổ lệnh in-memory với **Per-Symbol Locking**. Mỗi symbol (BTC, ETH, ...) có lock riêng — lệnh BTC không block lệnh ETH. Tài liệu này xem WAL là persistence contract của order state; muốn crash-recovery đáng tin cho production thì mọi transition quan trọng phải thực sự không có đường bypass.
-* **`reconciler.py` (346 dòng)**: Chạy định kỳ 60s, đối chiếu trạng thái OMS local với sàn. Phát hiện "missed fills" (lệnh đã khớp trên sàn nhưng OMS chưa biết do mất kết nối) và inject ngược vào pipeline.
-* **`oms_serializer.py` (112 dòng)**: Binary codec cho WAL payload — pack/unpack `OrderEntry` vào đúng 32 bytes bằng `ctypes.LittleEndianStructure`.
+* **`order_book.py` (656 lines)**: In-memory order book with **Per-Symbol Locking**. Each symbol (BTC, ETH, ...) has its own lock — BTC orders do not block ETH orders. This documentation views the WAL as the persistence contract for order state; for crash-recovery to be trustworthy in production, every critical transition must truly have no bypass path.
+* **`reconciler.py` (346 lines)**: Runs periodically every 60s, reconciles local OMS state with the exchange. Detects "missed fills" (orders filled on the exchange but unknown to the OMS due to connectivity loss) and injects them back into the pipeline.
+* **`oms_serializer.py` (112 lines)**: Binary codec for WAL payloads — packs/unpacks `OrderEntry` into exactly 32 bytes using `ctypes.LittleEndianStructure`.
 
-> Nếu dùng Kairos làm reference cho OMS production, state machine tối thiểu nên được enforce rõ: `NEW -> ACK -> PARTIAL -> FILLED / CANCELED / REJECTED`. Bất kỳ transition nhảy cóc hoặc đi ngược phải bị xem là mismatch để reconcile hoặc halt.
+> If using Kairos as a reference for a production OMS, the state machine should at minimum be explicitly enforced: `NEW -> ACK -> PARTIAL -> FILLED / CANCELED / REJECTED`. Any skipped or reversed transition should be treated as a mismatch requiring reconciliation or halt.
 
-**Durability Contract**: Mọi lệnh được ghi WAL theo protocol 2-phase:
+**Durability Contract**: Every order is written to the WAL using a 2-phase protocol:
 1. `ORDER_SENT`: Payload = `client_order_id[:32]` (identity record), `flags = 0`.
-2. `ORDER_FILLED / CANCELLED / REJECTED`: Payload = `_OrderPayload` 32 bytes, `flags = wal_seq_id` của entry ORDER_SENT tương ứng — liên kết update về gốc.
+2. `ORDER_FILLED / CANCELLED / REJECTED`: Payload = `_OrderPayload` 32 bytes, `flags = wal_seq_id` of the corresponding ORDER_SENT entry — linking the update back to the origin.
 
-**Backpressure Gates**: OrderBook từ chối lệnh mới khi hệ thống quá tải, kiểm tra **trước khi acquire lock** (zero contention):
+**Backpressure Gates**: OrderBook rejects new orders when the system is overloaded, checking **before acquiring the lock** (zero contention):
 
 ```python
 # thuc_thi_lenh/quan_ly_lenh/order_book.py
 def _gate_reject_reason(self) -> Optional[str]:
     if self._time_validator.capital_multiplier() == 0.0:
-        return "capital_zero"          # TimeValidator đã cắt vốn
+        return "capital_zero"          # TimeValidator has zeroed capital
     if self._cb_registry.get_state("place") == CBState.OPEN:
-        return "circuit_open"          # Circuit breaker đang mở
+        return "circuit_open"          # Circuit breaker is open
     util = self._wal.utilization()
-    if util >= 0.95:                   # WAL đạt 95% capacity
-        return f"wal_full:{util:.0%}"  # Bảo lưu headroom cho updates
+    if util >= 0.95:                   # WAL at 95% capacity
+        return f"wal_full:{util:.0%}"  # Reserve headroom for updates
     return None
 ```
 
-**Object Pool** (`OrderPool`): Pre-allocate 2,048 `OrderEntry` instances khi khởi tạo. Hot-path `register()` lấy từ pool thay vì `__init__` mới — giảm ~3× RAM per instance (nhờ `slots=True`) và loại bỏ hoàn toàn GC pressure. Pool cạn → fallback sang fresh allocation (không panic, không block).
+**Object Pool** (`OrderPool`): Pre-allocates 2,048 `OrderEntry` instances at initialization. The hot-path `register()` borrows from the pool instead of calling `__init__` — reducing ~3× RAM per instance (thanks to `slots=True`) and completely eliminating GC pressure. Pool exhaustion → fallback to fresh allocation (no panic, no block).
 
-**Lock Ordering** (bất biến chống deadlock): `_sym_locks[symbol]` **TRƯỚC** → `_wal_lock` **SAU**. Không bao giờ giữ `_wal_lock` mà không giữ symbol lock trước. Hold time dưới lock: chỉ dict ops + ctypes encode (<1µs).
+**Lock Ordering** (deadlock-prevention invariant): `_sym_locks[symbol]` **FIRST** → `_wal_lock` **SECOND**. Never hold `_wal_lock` without first holding the symbol lock. Hold time under lock: only dict ops + ctypes encode (<1µs).
 
-**WAL Replay** khi startup (single-threaded, trước concurrent access):
-1. **Pass 1** (`ORDER_SENT`): Xây dựng `seq_to_coid` map và stub `OrderEntry`.
-2. **Pass 2** (update entries): Dùng `entry.flags` → lookup coid → apply `_OrderPayload`.
+**WAL Replay** at startup (single-threaded, before concurrent access):
+1. **Pass 1** (`ORDER_SENT`): Build `seq_to_coid` map and stub `OrderEntry`.
+2. **Pass 2** (update entries): Use `entry.flags` → lookup coid → apply `_OrderPayload`.
 3. **Partition**: Non-terminal → `_active` dict. Terminal → `_archive` deque(maxlen=50,000).
-4. **Verification**: FILLED orders phải có `filled_qty > 0`, qty không âm — fail-stop nếu vi phạm.
+4. **Verification**: FILLED orders must have `filled_qty > 0`, qty non-negative — fail-stop on violation.
 
-**WAL Rotation**: Khi `entry_count >= segment_rotation_count` (mặc định 60,000), `rotate_wal()` snapshot toàn bộ active orders vào WAL mới rồi atomic swap reference. Old WAL được close nhưng không xóa — caller chịu trách nhiệm archive.
+**WAL Rotation**: When `entry_count >= segment_rotation_count` (default 60,000), `rotate_wal()` snapshots all active orders into a new WAL then atomically swaps the reference. The old WAL is closed but not deleted — the caller is responsible for archiving.
 
-#### PnL Accounting Engine (`ke_toan_pnl/`) — 1,297 dòng
+#### PnL Accounting Engine (`ke_toan_pnl/`) — 1,297 lines
 
-**Ba rủi ro kế toán và cơ chế xử lý:**
+**Three accounting risks and their mitigation mechanisms:**
 
-| Rủi ro | Biểu hiện | Cơ chế xử lý |
-|--------|-----------|--------------|
-| Floating-point accumulation | `0.1 + 0.2 ≠ 0.3` tích lũy qua nghìn giao dịch | Integer-scaled arithmetic: mọi giá trị × `scale_factor=1e8` → `int64` |
-| Concurrent mutation (torn read) | Thread 1 đọc PnL khi Thread 2 đang cập nhật | OCC với `scale_ref.version` check trong `sym_lock` |
-| Crash mid-update | Mất điện giữa fee update → PnL/fee diverge vĩnh viễn | WAL dual-entry checkpoint: `CheckpointA` + `CheckpointB` liên kết qua `txn_nonce` |
+| Risk | Manifestation | Mitigation |
+|------|--------------|------------|
+| Floating-point accumulation | `0.1 + 0.2 ≠ 0.3` accumulates over thousands of trades | Integer-scaled arithmetic: all values × `scale_factor=1e8` → `int64` |
+| Concurrent mutation (torn read) | Thread 1 reads PnL while Thread 2 is updating | OCC with `scale_ref.version` check inside `sym_lock` |
+| Crash mid-update | Power loss mid-fee-update → PnL/fee diverge permanently | WAL dual-entry checkpoint: `CheckpointA` + `CheckpointB` linked via `txn_nonce` |
 
-**Kiến trúc:** Integer-Scaled Arithmetic + WAL-Backed Checkpoint + OCC:
+**Architecture:** Integer-Scaled Arithmetic + WAL-Backed Checkpoint + OCC:
 
-* **`pnl_aggregator.py` (622 dòng)**: Root orchestrator — điều phối `RealizedPnLTracker`, `FeeLedger`, và `MarkToMarket`. Sở hữu WAL checkpoint protocol, authority reconciliation, và crash-forensics dump.
-* **`pnl_tracker.py` (323 dòng)**: Tính realized PnL bằng thuật toán FIFO (First-In-First-Out). Mỗi fill được ghi WAL `TRADE_RECORD` 32 bytes.
-* **`fee_ledger.py` (254 dòng)**: Ghi nhận trade fees và funding payments. Phát hiện anomaly (fee > 1% notional → cảnh báo).
-* **`mark_to_market.py` (98 dòng)**: Theo dõi mark price real-time và tính unrealized PnL.
+* **`pnl_aggregator.py` (622 lines)**: Root orchestrator — coordinates `RealizedPnLTracker`, `FeeLedger`, and `MarkToMarket`. Owns the WAL checkpoint protocol, authority reconciliation, and crash-forensics dump.
+* **`pnl_tracker.py` (323 lines)**: Computes realized PnL using FIFO (First-In-First-Out) algorithm. Each fill is logged as a WAL `TRADE_RECORD` of 32 bytes.
+* **`fee_ledger.py` (254 lines)**: Records trade fees and funding payments. Detects anomalies (fee > 1% notional → warning).
+* **`mark_to_market.py` (98 lines)**: Tracks mark price in real-time and computes unrealized PnL.
 
 **Integer Arithmetic — Precision Contract:**
 
-Mọi giá trị tài chính được nhân với `scale_factor = 1e8` (100,000,000) và lưu dưới dạng `int64`. Python integer arithmetic là exact — không có epsilon error. Khi cần hiển thị, chia ngược cho `scale_factor`:
+All financial values are multiplied by `scale_factor = 1e8` (100,000,000) and stored as `int64`. Python integer arithmetic is exact — no epsilon error. When display is needed, divide back by `scale_factor`:
 
 ```python
-# Ví dụ: 0.00012345 BTC → 12345 (scaled)
-# Phép cộng: 12345 + 67890 = 80235 (chính xác tuyệt đối)
-# Nếu dùng float: 0.00012345 + 0.00067890 = 0.0008023499999... (sai!)
+# Example: 0.00012345 BTC → 12345 (scaled)
+# Addition: 12345 + 67890 = 80235 (absolutely precise)
+# If using float: 0.00012345 + 0.00067890 = 0.0008023499999... (wrong!)
 ```
 
-> Integer arithmetic chỉ giải quyết vấn đề precision. Với multi-asset hoặc multi-collateral, vẫn cần một lớp chuẩn hóa về `base currency`, `funding sign`, `fee semantics`, và loại sản phẩm (`linear`, `inverse`, `coin-margined`), nếu không PnL có thể đúng về số học nhưng sai về kinh tế.
+> Integer arithmetic only addresses the precision problem. For multi-asset or multi-collateral portfolios, an additional normalization layer for `base currency`, `funding sign`, `fee semantics`, and product type (`linear`, `inverse`, `coin-margined`) is still required — otherwise PnL may be arithmetically correct but economically wrong.
 
-**OCC (Optimistic Concurrency Control)**: `RealizedPnLTracker` sử dụng OCC thay vì global lock. Mỗi fill được xử lý qua vòng lặp retry tối đa 5 lần:
+**OCC (Optimistic Concurrency Control)**: `RealizedPnLTracker` uses OCC instead of a global lock. Each fill is processed through a retry loop of up to 5 attempts:
 
 ```python
 # thuc_thi_lenh/quan_ly_danh_muc/ke_toan_pnl/pnl_tracker.py
@@ -1140,9 +1143,9 @@ for _attempt in range(MAX_OCC_RETRIES):
 
     with sym_lock:
         if self._scale_ref.version != ver:
-            continue   # Scale đã thay đổi → retry
+            continue   # Scale changed → retry
         gross_pnl_s = _apply_fill(state, side, qty_s, price_s, sf)
-        # WAL append dưới sym_lock → wal_lock (lock ordering)
+        # WAL append under sym_lock → wal_lock (lock ordering)
         with self._wal_lock:
             self._wal.append(TRADE_RECORD, payload, flags=fill_ts_ns & 0xFFFF_FFFF)
         break
@@ -1150,57 +1153,57 @@ else:
     raise ScaleVersionConflictError(f"OCC starvation after 5 retries")
 ```
 
-> OCC chỉ an toàn khi operation là `idempotent` và `retry-safe`. Nếu business logic phụ thuộc side effect bên ngoài hoặc trạng thái cũ không thể tái áp dụng thuần túy, critical path nên dùng ownership/locking chặt hơn thay vì trông chờ vào retry.
+> OCC is only safe when operations are `idempotent` and `retry-safe`. If business logic depends on external side effects or state that cannot be purely re-applied, critical paths should use stricter ownership/locking rather than relying on retry.
 
-**Dual-Key Fill Idempotency**: Mỗi fill được deduplicate bằng 2 key: `(client_order_id, cum_qty_scaled)` + `fill_ts_ns`. OrderedDict FIFO eviction tại 10,000 entries. Sau WAL replay, `seed_idempotency_cache()` rebuild cache từ OMS OrderBook — ngăn WebSocket reconnect gửi lại fill cũ gây double PnL.
+**Dual-Key Fill Idempotency**: Each fill is deduplicated by 2 keys: `(client_order_id, cum_qty_scaled)` + `fill_ts_ns`. OrderedDict FIFO eviction at 10,000 entries. After WAL replay, `seed_idempotency_cache()` rebuilds the cache from the OMS OrderBook — preventing WebSocket reconnection from resending old fills that would cause double PnL.
 
 **WAL Checkpoint Protocol** (★FIX-1+7) — Atomic dual-entry:
 
 ```
 CheckpointA (type=7):  txn_nonce(4B) + total_realized(8B) + total_fees(8B) + net_equity(8B)
 CheckpointB (type=70): txn_nonce(4B) + peak_equity(8B) + max_drawdown(8B) + total_funding(8B)
-                       flags = A.seq_id (liên kết B → A)
+                       flags = A.seq_id (links B → A)
 ```
 
-3-layer replay verification: `B.flags == A.seq_id` ∧ `B.txn_nonce == A.txn_nonce` ∧ CRC32 per entry. Nếu bất kỳ layer nào fail → checkpoint bị bỏ qua, replay từ đầu.
+3-layer replay verification: `B.flags == A.seq_id` ∧ `B.txn_nonce == A.txn_nonce` ∧ CRC32 per entry. If any layer fails → checkpoint is discarded, replay from the beginning.
 
-**Scale Downgrade** (★FIX-2): Khi `int64` gần tràn (do scale_factor quá lớn), hệ thống thực hiện **epoch barrier** dưới `_global_lock`: WAL `SCALE_CHANGE` → `fsync()` → rescale tất cả sub-modules → `version++`. OCC trong các thread khác sẽ phát hiện version change và retry.
+**Scale Downgrade** (★FIX-2): When `int64` approaches overflow (due to an excessively large scale_factor), the system performs an **epoch barrier** under `_global_lock`: WAL `SCALE_CHANGE` → `fsync()` → rescale all sub-modules → `version++`. OCC in other threads will detect the version change and retry.
 
-**Integrity Invariants** — bộ contract tối thiểu cần được enforce bằng runtime checks hoặc sampling khi hướng production:
+**Integrity Invariants** — The minimum contract set that should be enforced via runtime checks or sampling for production:
 
-| # | Invariant | Hành vi khi vi phạm |
-|---|-----------|---------------------|
+| # | Invariant | Behavior on Violation |
+|---|-----------|----------------------|
 | 1 | `net_pnl == realized - fees - funding` | CRITICAL log + crash dump |
 | 2 | `equity >= -max_drawdown_threshold` | CRITICAL log + crash dump |
 | 3 | `unrealized == mark_to_market sum` | WARNING only (cross-module) |
 
-**Authority Reconciliation** (★FIX-5): Cho phép exchange override PnL local — nhưng **CHỈ AN TOÀN khi `position.size == 0`**. Nếu vị thế đang mở, override bị **DEFERRED** với `DIVERGENCE_WARNING` để tránh equity corruption.
+**Authority Reconciliation** (★FIX-5): Allows exchange to override local PnL — but is **ONLY SAFE when `position.size == 0`**. If a position is open, the override is **DEFERRED** with a `DIVERGENCE_WARNING` to prevent equity corruption.
 
-#### Session Manager (`session_manager.py`) — 575 dòng
+#### Session Manager (`session_manager.py`) — 575 lines
 
-**Trách nhiệm:** Đóng sổ phiên giao dịch hàng ngày — snapshot PnL aggregator, tính Sharpe ratio, ghi record vào NDJSON archive, reset session state. Đảm bảo idempotency: nếu rotation bị interrupt giữa chừng, không mất record và không duplicate.
+**Responsibility:** Closes the daily trading session — snapshots the PnL aggregator, computes Sharpe ratio, writes the record to the NDJSON archive, and resets session state. Ensures idempotency: if rotation is interrupted mid-process, no record is lost and no duplicates are created.
 
-**Cơ chế:** atomic rotation + verified write loop (read-back sau write) + hot/cold storage tiering (NDJSON active → Parquet cold):
+**Mechanism:** atomic rotation + verified write loop (read-back after write) + hot/cold storage tiering (NDJSON active → Parquet cold):
 
-**Rotate Session** — Quy trình đóng sổ ngày:
+**Rotate Session** — Daily session close procedure:
 
 ```python
 # thuc_thi_lenh/quan_ly_danh_muc/session_manager.py
 def rotate_session(self) -> dict:
     with self._global_lock:
-        # 1. Snapshot PnL state TRƯỚC khi reset
+        # 1. Snapshot PnL state BEFORE reset
         dump = self._pnl_agg.snapshot()
         old_session = self._pnl_agg.reset_session()
 
-        # 2. Tính Sharpe Ratio = mean(returns) / std(returns)
+        # 2. Compute Sharpe Ratio = mean(returns) / std(returns)
         sharpe = self._calculate_sharpe(old_session)
 
-        # 3. Kiểm tra equity guardrail
+        # 3. Check equity guardrail
         if dump["net_equity"] < self._equity_floor:
             logger.critical("EQUITY_FLOOR_BREACH equity=%.2f floor=%.2f",
                           dump["net_equity"], self._equity_floor)
 
-        # 4. Ghi vào NDJSON archive theo kiểu append-only
+        # 4. Write to NDJSON archive in append-only fashion
         record = {
             "session_id": self._session_counter,
             "start_ns": old_session.session_start_ns,
@@ -1214,37 +1217,37 @@ def rotate_session(self) -> dict:
     return record
 ```
 
-**Crash-Resilient Append** — Mỗi record được ghi vào file NDJSON (1 JSON object / dòng) bằng quy trình đảm bảo durability:
+**Crash-Resilient Append** — Each record is written to an NDJSON file (1 JSON object / line) via a durability-guaranteed procedure:
 
-1. **`portalocker.lock()`**: Khóa file cross-platform (Windows `LockFileEx` / POSIX `fcntl.flock`) — ngăn 2 process ghi đồng thời.
-2. **`os.write()` + `os.fsync()`**: Ghi trực tiếp qua file descriptor (bypass Python buffer) rồi flush xuống đĩa vật lý.
-3. **Verified write loop**: Sau khi ghi, đọc lại dòng cuối và so sánh — nếu không khớp → retry tối đa 3 lần.
+1. **`portalocker.lock()`**: Cross-platform file lock (Windows `LockFileEx` / POSIX `fcntl.flock`) — prevents 2 processes from writing simultaneously.
+2. **`os.write()` + `os.fsync()`**: Writes directly via file descriptor (bypassing Python buffer) then flushes to physical disk.
+3. **Verified write loop**: After writing, reads back the last line and compares — if mismatched → retry up to 3 times.
 
 ```python
-# Verified write — đọc lại sau khi ghi để xác nhận
+# Verified write — read back after write to confirm
 for attempt in range(self._max_write_retries):
     fd = os.open(str(self._archive_path), os.O_WRONLY | os.O_APPEND | os.O_CREAT)
     try:
         os.write(fd, line_bytes)
-        os.fsync(fd)                    # Flush xuống đĩa vật lý
+        os.fsync(fd)                    # Flush to physical disk
     finally:
         os.close(fd)
 
-    # Verify: đọc lại dòng cuối → so sánh
+    # Verify: read back the last line → compare
     last_line = self._read_last_line()
     if last_line.strip() == line.strip():
-        return   # ✓ Ghi thành công
+        return   # ✓ Write successful
     logger.warning("write_verify_failed attempt=%d", attempt)
 ```
 
-**O(1) Tail Read** — Tại sao không đọc toàn bộ file?
+**O(1) Tail Read** — Why not read the entire file?
 
-Khi khởi động, SessionManager cần đọc session cuối để khôi phục equity. File archive có thể chứa hàng nghìn sessions. Thay vì đọc toàn bộ (O(n)), hệ thống seek đến cuối file và đọc ngược để tìm ký tự `\n` cuối cùng — chỉ parse 1 dòng JSON:
+At startup, SessionManager needs to read the last session to restore equity. The archive file may contain thousands of sessions. Instead of reading everything (O(n)), the system seeks to the end of the file and reads backward to find the last `\n` character — parsing only 1 JSON line:
 
 ```python
 def _read_last_line(self) -> str:
     with open(self._archive_path, "rb") as f:
-        f.seek(0, 2)              # Seek đến EOF
+        f.seek(0, 2)              # Seek to EOF
         pos = f.tell()
         buf = bytearray()
         while pos > 0:
@@ -1252,48 +1255,48 @@ def _read_last_line(self) -> str:
             f.seek(pos)
             char = f.read(1)
             if char == b'\n' and buf:
-                break             # Tìm thấy \n → dòng cuối hoàn chỉnh
+                break             # Found \n → last line is complete
             buf.append(char[0])
     return bytes(buf[::-1]).decode("utf-8")
 ```
 
-**NDJSON → Parquet Compaction**: Sau mỗi `compaction_interval` sessions, file NDJSON (hot data) được compact thành Parquet với Snappy compression (cold storage) bằng Polars. Parquet cho phép query phân tích (Sharpe trung bình, drawdown xu hướng) với tốc độ columnar, trong khi NDJSON giữ vai trò append-only WAL cho durability.
+**NDJSON → Parquet Compaction**: After every `compaction_interval` sessions, the NDJSON file (hot data) is compacted into Parquet with Snappy compression (cold storage) using Polars. Parquet enables columnar analytical queries (average Sharpe, drawdown trends), while NDJSON serves as the append-only WAL for durability.
 
-**Truncate Corrupt Tail**: Nếu máy crash giữa lúc ghi NDJSON, dòng cuối có thể bị cắt ngang (partial JSON). Khi startup, `_truncate_corrupt_last_line()` phát hiện và loại bỏ dòng lỗi — chỉ mất tối đa 1 session record (acceptable loss so với corruption toàn file).
+**Truncate Corrupt Tail**: If the machine crashes mid-NDJSON-write, the last line may be truncated (partial JSON). At startup, `_truncate_corrupt_last_line()` detects and removes the corrupt line — losing at most 1 session record (acceptable loss vs full-file corruption).
 
-#### Position Synchronizer (`position_sync.py`) — 383 dòng
+#### Position Synchronizer (`position_sync.py`) — 383 lines
 
-PositionSynchronizer là lớp đối soát giúp kéo local state về gần thực tế trên sàn và phát hiện divergence sớm. Nó không nên được hiểu là bằng chứng rằng trạng thái local `luôn` khớp exchange trong mọi failure mode. Nó hoạt động theo 3 chế độ:
+PositionSynchronizer is the reconciliation layer that pulls local state closer to exchange reality and detects divergence early. It should not be interpreted as proof that local state `always` matches the exchange in every failure mode. It operates in 3 modes:
 
-1. **Startup Full Sync**: Chạy **MỘT LẦN** sau WAL replay, TRƯỚC khi accept fills. Exchange được xem là authority cho các field có thể kiểm chứng trực tiếp ở startup; nếu xuất hiện drift chưa giải thích được hoặc side effect chưa reconcile xong, hướng an toàn hơn là `degraded` / `halt` thay vì force-overwrite mù `KairosState`.
-2. **Periodic Drift Detection** (60s): So sánh local vs exchange. **CHỈ LOG, KHÔNG auto-fix**. 3 violations liên tiếp → **kill-switch** (dừng toàn bộ giao dịch).
-3. **Priority Self-Healing Queue**: External callers push symbols qua `request_heal()`. Worker pop theo priority (notional cao nhất trước) và re-query exchange tại max 2 REST/s.
+1. **Startup Full Sync**: Runs **ONCE** after WAL replay, BEFORE accepting fills. The exchange is treated as the authority for fields that can be directly verified at startup; if unexplained drift or unreconciled side effects appear, the safer path is `degraded` / `halt` rather than blindly force-overwriting `KairosState`.
+2. **Periodic Drift Detection** (60s): Compares local vs exchange. **LOG ONLY, NO auto-fix**. 3 consecutive violations → **kill-switch** (halt all trading).
+3. **Priority Self-Healing Queue**: External callers push symbols via `request_heal()`. Worker pops by priority (highest notional first) and re-queries the exchange at max 2 REST/s.
 
-**Clock Skew EMA**: Mỗi response từ exchange mang theo timestamp. Hệ thống tính EMA của `(local_recv_ms - exchange_ts_ms)` — nếu skew > 500ms → WARNING, > 2000ms → CRITICAL. Phát hiện sớm network issues hoặc system clock drift.
+**Clock Skew EMA**: Each exchange response carries a timestamp. The system computes an EMA of `(local_recv_ms - exchange_ts_ms)` — if skew > 500ms → WARNING, > 2000ms → CRITICAL. Early detection of network issues or system clock drift.
 
-**Kill-Switch Cooldown**: Trước khi trigger kill-switch, kiểm tra `ho_du_lieu/he_thong/system.KILLED` file mtime — nếu đã có kill trong `kill_cooldown_s` giây gần đây → suppress để tránh flapping.
+**Kill-Switch Cooldown**: Before triggering the kill-switch, checks `ho_du_lieu/he_thong/system.KILLED` file mtime — if a kill occurred within the last `kill_cooldown_s` seconds → suppress to prevent flapping.
 
-#### Funding Collector (`funding_collector.py`) — 234 dòng
+#### Funding Collector (`funding_collector.py`) — 234 lines
 
-FundingCollector thu thập định kỳ các khoản thanh toán funding rate từ tất cả sàn giao dịch. Đặc biệt quan trọng: **Sign Normalization (★FIX-10)** — Binance/Bybit trả `positive = received` (đảo dấu so với Kairos), trong khi OKX trả `positive = paid` (giữ nguyên). Nếu không chuẩn hóa, PnL sẽ sai hoàn toàn.
+FundingCollector periodically collects funding rate payments from all exchanges. Critically important: **Sign Normalization (★FIX-10)** — Binance/Bybit return `positive = received` (reversed sign vs Kairos convention), while OKX returns `positive = paid` (unchanged). Without normalization, PnL calculations are entirely incorrect.
 
-**NDJSON Dedup WAL** (`funding_dedup.jsonl`): Mỗi funding payment được hash và lưu vào LRU OrderedDict (50,000 entries). File NDJSON đóng vai trò WAL — crash mid-write chỉ corrupt dòng cuối. Daily compaction prune entries cũ hơn `dedup_keep_days` bằng atomic `write → fsync → os.replace`.
+**NDJSON Dedup WAL** (`funding_dedup.jsonl`): Each funding payment is hashed and stored in an LRU OrderedDict (50,000 entries). The NDJSON file serves as a WAL — crash mid-write only corrupts the last line. Daily compaction prunes entries older than `dedup_keep_days` via atomic `write → fsync → os.replace`.
 
-#### Protection Stack (`chien_luoc_thu_lai/`) — 994 dòng
+#### Protection Stack (`chien_luoc_thu_lai/`) — 994 lines
 
-**Trách nhiệm:** Xử lý 4 loại lỗi REST API (429 rate-limit, 5xx server error, timeout, connection reset) qua 3 tầng xếp chồng. **Invariant quan trọng nhất:** `PLACE + TIMEOUT = UnconfirmedOrder` — tuyệt đối không retry, phải reconcile qua OMS.
+**Responsibility:** Handles 4 types of REST API failures (429 rate-limit, 5xx server error, timeout, connection reset) through a 3-tier stacked architecture. **Most critical invariant:** `PLACE + TIMEOUT = UnconfirmedOrder` — absolutely no retry, must reconcile via OMS.
 
-**Kiến trúc 3 tầng:**
+**3-Tier Architecture:**
 
-**Tầng 1: Adaptive Rate Limiter** (`rate_limiter.py`) — Token Bucket per-endpoint. PLACE, CANCEL, và INFO có bucket **hoàn toàn độc lập** — khi PLACE cạn token (thị trường sôi động), CANCEL vẫn đi được (quan trọng khi cần emergency cancel). Rate tự điều chỉnh qua EWMA latency tracking:
+**Tier 1: Adaptive Rate Limiter** (`rate_limiter.py`) — Token Bucket per-endpoint. PLACE, CANCEL, and INFO have **completely independent** buckets — when PLACE runs out of tokens (hot market), CANCEL still works (critical for emergency cancels). Rate self-adjusts via EWMA latency tracking:
 
 ```
 R_new = R_old × (target_latency / ewma_latency)  — proportional throttle
 ```
 
-Death Spiral Prevention: Nếu không có request trong `recovery_window_s` (30s), EWMA latency bị halve dần và rate recover +10% base_rate mỗi chu kỳ — tránh tình trạng rate bị giảm vĩnh viễn.
+Death Spiral Prevention: If no request occurs within `recovery_window_s` (30s), EWMA latency is gradually halved and rate recovers +10% base_rate per cycle — preventing permanent rate depression.
 
-**Tầng 2: Weighted Circuit Breaker** (`circuit_breaker.py`) — State machine 3 trạng thái:
+**Tier 2: Weighted Circuit Breaker** (`circuit_breaker.py`) — 3-state machine:
 
 ```
 CLOSED ──[weight_accum ≥ threshold]──► OPEN ──[recovery_timeout]──► HALF_OPEN
@@ -1302,34 +1305,34 @@ CLOSED ──[weight_accum ≥ threshold]──► OPEN ──[recovery_timeout]
               ──────────[probe failure]──────────────────────────────► OPEN
 ```
 
-Error weights cộng dồn: `timeout=1`, `ratelimit=3`, `server_error=5`. HALF_OPEN chỉ cho phép **đúng 1 probe request** tại một thời điểm (ngăn Thundering Herd). Alert debouncing: CRITICAL log tối đa 1 lần / `alert_cooldown_ms` / breaker.
+Error weights accumulate: `timeout=1`, `ratelimit=3`, `server_error=5`. HALF_OPEN allows **exactly 1 probe request** at a time (preventing Thundering Herd). Alert debouncing: CRITICAL log at most 1 time / `alert_cooldown_ms` / breaker.
 
-**Tầng 3: Smart Retry Policy** (`retry_policy.py`) — Decorrelated Jitter (AWS best practice):
+**Tier 3: Smart Retry Policy** (`retry_policy.py`) — Decorrelated Jitter (AWS best practice):
 
 ```
 delay_i = min(max_delay, uniform(base_delay, prev_delay × 3))
 ```
 
-Tốt hơn exponential backoff vì dàn đều tải, tránh synchronized retry storms. **Deadline-aware**: nếu `elapsed + next_delay > deadline_ms` → abort sớm. Quy tắc quan trọng nhất: **PLACE + TIMEOUT = UnconfirmedOrder** — lệnh có thể đã vào matching engine, **TUYỆT ĐỐI KHÔNG retry** (Ghost Position risk). EMS phải reconcile.
+Superior to exponential backoff because it distributes load evenly, avoiding synchronized retry storms. **Deadline-aware**: if `elapsed + next_delay > deadline_ms` → abort early. Most critical rule: **PLACE + TIMEOUT = UnconfirmedOrder** — the order may already be in the matching engine, **ABSOLUTELY NO retry** (Ghost Position risk). EMS must reconcile.
 
-**`ExecutionWrapper`** (`execution_wrapper.py`) — Điểm tích hợp duy nhất, gói cả 3 tầng vào 1 method call:
+**`ExecutionWrapper`** (`execution_wrapper.py`) — The single integration point, wrapping all 3 tiers into 1 method call:
 
 ```python
-# Trước: adapter._execute_with_retry(...)
-# Sau:   wrapper.protected_call(coro_factory, EndpointKind.PLACE, ...)
+# Before: adapter._execute_with_retry(...)
+# After:  wrapper.protected_call(coro_factory, EndpointKind.PLACE, ...)
 #
-# Luồng nội bộ:
+# Internal flow:
 #   RateLimiter.acquire() → CircuitBreaker.check() → SmartRetryPolicy.execute()
 #   → CB feedback → Latency record → Intent resolve → Eviction
 ```
 
-**Intent State Machine**: Mỗi lệnh đi qua lifecycle `PENDING → SENT → ACKNOWLEDGED / UNCONFIRMED → RESOLVED`. Intent stale (>300s chưa RESOLVED) bị evict vào `deque(maxlen=10,000)` — chống OOM.
+**Intent State Machine**: Each order goes through lifecycle `PENDING → SENT → ACKNOWLEDGED / UNCONFIRMED → RESOLVED`. Stale intents (>300s without RESOLVED) are evicted to `deque(maxlen=10,000)` — preventing OOM.
 
 #### Execution Configuration (`cau_hinh/`)
 
-Toàn bộ runtime parameters được hợp nhất vào 3 file YAML phẳng, cho phép thay đổi hành vi mà không cần sửa code:
+All runtime parameters are consolidated into 3 flat YAML files, enabling behavior changes without code modifications:
 
-| File | Scope | Top-level keys |
+| File | Scope | Top-level Keys |
 |------|-------|---------------|
 | `trading.yaml` | Risk, OMS, PnL, Position Sync, Session, Strategy | `risk`, `order_book`, `wal`, `reconciliation`, `backpressure`, `cancel_all`, `pnl`, `position_sync`, `funding`, `persistence`, `session`, `strategy` |
 | `infra.yaml` | Flow Control, Execution Protection, Alerting, Observability | `flow_control`, `execution` (`rate_limiter`, `circuit_breaker`, `retry`), `alerting`, `observability` |
@@ -1337,89 +1340,89 @@ Toàn bộ runtime parameters được hợp nhất vào 3 file YAML phẳng, ch
 
 ---
 
-### 3.6. Lưới Bảo Vệ (Risk System)
+### 3.6. Risk System
 
-**Trách nhiệm:** Cửa chặn cuối cùng trước khi order rời hệ thống. Quyền từ chối tuyệt đối bất kể Signal Engine và Portfolio Engine đã approve. Fail-fast: evaluate rules theo thứ tự chi phí tính toán tăng dần.
+**Responsibility:** The final gate before an order leaves the system. Holds absolute veto power regardless of Signal Engine and Portfolio Engine approval. Fail-fast: evaluates rules in order of ascending computational cost.
 
-**Hợp đồng hiệu năng:** `risk_gate.check()` hoàn thành trong **< 50µs** trên hot-path. File `risk_gate.py` — 557 dòng.
+**Performance contract:** `risk_gate.check()` completes in **< 50µs** on the hot-path. File `risk_gate.py` — 557 lines.
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/5f9c5cce-16f7-4580-920c-394daa564500" />
 
 #### Pre-trade Risk Gate — `check()` < 50µs
 
-Hàm `check()` là cửa chặn cuối cùng trước khi lệnh được gửi. Nó nhận vào thông tin lệnh (symbol, hướng mua/bán, giá trị USD, order ID) và trả về 0 nếu cho phép, hoặc mã lỗi cụ thể nếu từ chối.
+The `check()` function is the final gate before an order is submitted. It receives order information (symbol, buy/sell direction, USD value, order ID) and returns 0 if allowed, or a specific error code if rejected.
 
-Điểm quan trọng: biến `self._state` là một tham chiếu Python — khi monitor thread cập nhật state mới, nó tạo một state object mới và gán vào `self._state`. Thread 1 đọc `self._state` luôn nhận được một bản state hoàn chỉnh (nhờ GIL đảm bảo assignment là atomic). Không cần lock, không có tình trạng đọc state "nửa cũ nửa mới":
+Key point: `self._state` is a Python reference — when the monitor thread updates with a new state, it creates a new state object and assigns it to `self._state`. Thread 1 reading `self._state` always gets a complete state object (GIL guarantees assignment is atomic). No lock needed, no "half-old half-new" state reads:
 
 ```python
 # quan_tri_rui_ro/kiem_tra_truoc_lenh/risk_gate.py
 def check(self, symbol, side, order_usdt, order_id) -> int:
-    state = self._state   # Đọc tham chiếu — GIL-atomic, không lock
+    state = self._state   # Read reference — GIL-atomic, no lock
 
-    # KIỂM TRA ĐẦU TIÊN: State có còn "tươi" không?
-    # Nếu state đã cũ 500ms → có thể vị thế/PnL đã thay đổi mà ta chưa biết
+    # FIRST CHECK: Is state still "fresh"?
+    # If state is 500ms old → positions/PnL may have changed without our knowledge
     age_ns = now_ns - state.updated_ns
-    if age_ns > _STALE_HARD_NS:      # > 500ms → NGỪNG hoàn toàn
+    if age_ns > _STALE_HARD_NS:      # > 500ms → FULL STOP
         return RiskCode.STATE_STALE_HARD
-    if age_ns > _STALE_REDUCE_NS:    # > 200ms → chỉ cho đóng vị thế
+    if age_ns > _STALE_REDUCE_NS:    # > 200ms → only allow position reduction
         if not is_reduce:
             return RiskCode.STATE_REDUCE_ONLY
 
-    # KIỂM TRA TUẦN TỰ: chạy qua từng rule
-    # Dừng NGAY khi gặp rule đầu tiên fail (fail-fast)
+    # SEQUENTIAL CHECKS: iterate through each rule
+    # STOP IMMEDIATELY on first failing rule (fail-fast)
     for rule in self._rules:
         code = rule.check(symbol, side, order_usdt, state, self, now_ns)
-        if code: return code          # Trả mã lỗi → lệnh bị từ chối
+        if code: return code          # Return error code → order rejected
 
-    return RiskCode.OK                # Tất cả rules pass → cho phép
+    return RiskCode.OK                # All rules pass → allow
 ```
 
-**6 Rule kiểm tra tuần tự** — Mỗi rule giải quyết một loại rủi ro cụ thể. Thứ tự quan trọng: rule "rẻ" (tính toán ít) đặt trước để reject nhanh, rule "đắt" đặt sau:
+**6 Sequential Rules** — Each rule addresses a specific risk category. Order matters: "cheap" rules (low computation) go first for fast rejection, "expensive" rules go last:
 
-| # | Rule | Chức năng chi tiết | Ngưỡng ví dụ |
-|---|------|-------------------|-------------|
-| 1 | `MaxDailyLossRule` | Nếu tổng lỗ trong ngày vượt ngưỡng → ngừng giao dịch. Tránh "revenge trading" (cố gỡ gạc sau khi thua). | `max_daily_loss_usdt` |
-| 2 | `MaxDrawdownRule` | Nếu equity giảm quá nhiều so với đỉnh → ngừng. Bảo vệ vốn khi thị trường đi ngược chiến lược. | `max_drawdown_pct` |
-| 3 | `MaxOrderRateRule` | Giới hạn số lệnh/giây và lệnh/phút. Ngăn chặn vòng lặp vô hạn gửi lệnh do bug. | `per_sec`, `per_min` |
-| 4 | `DuplicateOrderGuardRule` | Nếu lệnh trùng symbol+side+size trong khoảng thời gian ngắn → chặn. Ngăn gửi lệnh trùng do retry logic lỗi. | `duplicate_cooldown_ms` |
-| 5 | `MaxOpenOrdersRule` | Giới hạn số lệnh đang mở trên mỗi symbol. Tránh "lệnh treo" quá nhiều ăn margin. | `max_open_orders_per_symbol` |
-| 6 | `MaxPositionConcentrationRule` | Không cho phép tập trung quá nhiều vốn vào 1 cặp coin. Đa dạng hóa bắt buộc. | `max_concentration_pct` |
+| # | Rule | Detailed Function | Example Threshold |
+|---|------|-------------------|-------------------|
+| 1 | `MaxDailyLossRule` | If total daily loss exceeds threshold → halt trading. Prevents "revenge trading" (chasing losses). | `max_daily_loss_usdt` |
+| 2 | `MaxDrawdownRule` | If equity drops too far from peak → halt. Protects capital when market moves against the strategy. | `max_drawdown_pct` |
+| 3 | `MaxOrderRateRule` | Limits orders/second and orders/minute. Prevents infinite order-sending loops caused by bugs. | `per_sec`, `per_min` |
+| 4 | `DuplicateOrderGuardRule` | If an order duplicates symbol+side+size within a short window → block. Prevents duplicate orders from faulty retry logic. | `duplicate_cooldown_ms` |
+| 5 | `MaxOpenOrdersRule` | Limits open orders per symbol. Prevents too many "hanging" orders consuming margin. | `max_open_orders_per_symbol` |
+| 6 | `MaxPositionConcentrationRule` | Prevents over-concentrating capital in a single trading pair. Enforces mandatory diversification. | `max_concentration_pct` |
 
 **Rate Bucket O(1)** — 1000-bucket per-second window + 60-bucket per-minute window:
 
 ```python
-# Generation-safe full-cycle reset — tránh negative count khi time jump >1000ms
+# Generation-safe full-cycle reset — prevents negative count on time jumps > 1000ms
 self._sec_buckets    = array.array("q", [0] * 1000)
 self._sec_bucket_gen = array.array("q", [0] * 1000)   # generation tag
 ```
 
 #### Watchdog Kill Switch (`nguoi_gac_cong/watchdog/`)
 
-Out-of-band Watchdog ping hệ thống qua 2 kênh song song:
-1. **ZMQ PUB/SUB** (port 5559): Watchdog SUB nhận HB để đo miss count.
-2. **File mtime** (`/tmp/kairos.alive`): Kênh dự phòng độc lập với ZMQ.
+Out-of-band Watchdog pings the system via 2 parallel channels:
+1. **ZMQ PUB/SUB** (port 5559): Watchdog SUBscribes to HB to measure miss count.
+2. **File mtime** (`/tmp/kairos.alive`): Backup channel independent of ZMQ.
 
-Watchdog chỉ trigger khi **CẢ HAI** kênh miss ≥ threshold liên tiếp → tránh false-positive. Khi trigger:
-* Hủy mọi kết nối REST API
-* Market Close toàn bộ vị thế
-* Đặt file cờ `ho_du_lieu/he_thong/system.KILLED` → chặn khởi động cho đến khi điều tra xong
+The Watchdog only triggers when **BOTH** channels miss ≥ threshold consecutively → prevents false-positives. On trigger:
+* Cancels all REST API connections
+* Market-closes all positions
+* Sets `ho_du_lieu/he_thong/system.KILLED` sentinel file → blocks restart until investigation completes
 
-> Watchdog chỉ thực sự an toàn nếu có `global halt state` dùng chung cho toàn hệ thống. Nếu OMS dừng nhưng một execution path khác vẫn còn quyền phát lệnh, kill switch mới chỉ là "cảnh báo mạnh", chưa phải system-wide stop tuyệt đối.
+> The Watchdog is only truly safe if there is a `global halt state` shared across the entire system. If the OMS stops but another execution path still has order-placing capability, the kill switch is merely a "strong warning", not an absolute system-wide stop.
 
 ---
 
-### 3.7. Hạ Tầng & Giao Tiếp (Infrastructure)
+### 3.7. Infrastructure & Communication
 
-Cấu trúc xương sống kết nối các module rời rạc thành một thể thống nhất.
+The skeletal structure connecting discrete modules into a unified whole.
 
 #### Event Bus (`ha_tang/bus_su_kien/zmq_bus.py`)
 
-Hệ thần kinh trung ương sử dụng ZeroMQ PUB/SUB:
+The central nervous system using ZeroMQ PUB/SUB:
 
 ```python
 # ha_tang/bus_su_kien/zmq_bus.py
 class AsyncEventBus:
-    """Mọi module đều cắm vào đây để Đọc (SUB) hoặc Ghi (PUB) Sự kiện."""
+    """All modules plug in here to Read (SUB) or Write (PUB) Events."""
     def __init__(self,
         pub_url: str = "inproc://kairos-event-bus",   # 10-50µs/msg
         sub_url: str = "inproc://kairos-event-bus",
@@ -1427,34 +1430,34 @@ class AsyncEventBus:
         self.ctx = zmq.asyncio.Context()
 
     async def publish(self, topic: str, payload_dict):
-        message_bytes = orjson.dumps(payload_dict)    # orjson: siêu tốc
+        message_bytes = orjson.dumps(payload_dict)    # orjson: ultra-fast
         await self.publisher.send_multipart([
             topic.encode('utf-8'), message_bytes
         ])
 ```
 
-* HWM = 10,000 — Chặn tràn RAM, message thừa có thể bị drop thay vì block. Điều này phù hợp cho `latency mode`; với luồng causal quan trọng cần kết hợp sequencing + gap detection hoặc chuyển sang `integrity mode`.
-* `inproc://` — Cùng process: loại bỏ TCP kernel stack, chỉ mất ~10-50µs/msg.
-* `orjson` — Serialize JSON nhanh gấp ~10× so với `json` stdlib.
+* HWM = 10,000 — Prevents RAM overflow; excess messages may be dropped instead of blocking. This is suitable for `latency mode`; for critical causal streams, combine with sequencing + gap detection or switch to `integrity mode`.
+* `inproc://` — Same process: eliminates the TCP kernel stack, costing only ~10-50µs/msg.
+* `orjson` — JSON serialization ~10× faster than `json` stdlib.
 
-#### Adaptive Shedder (`shedder.py`) — 209 dòng
+#### Adaptive Shedder (`shedder.py`) — 209 lines
 
-Trong thời điểm thị trường biến động mạnh (Flash Crash), lượng tin nhắn từ sàn có thể tăng gấp 10-50 lần bình thường. Nếu bot cố gắng xử lý tất cả, độ trễ sẽ tăng từ microsecond lên hàng giây → giao dịch bằng dữ liệu cũ → lỗ nặng.
-Adaptive Shedder giải quyết bài toán: **Khi nào nên vứt bỏ data cũ để bảo vệ hệ thống?** Nó sử dụng động cơ áp suất không khóa (Lock-free) với **4-factor multi-dimensional pressure model**:
+During extreme market volatility (Flash Crash), the volume of messages from exchanges can spike 10-50× above normal. If the bot attempts to process everything, latency increases from microseconds to seconds → trading on stale data → heavy losses.
+The Adaptive Shedder solves the problem: **When should old data be discarded to protect the system?** It uses a lock-free pressure engine with a **4-factor multi-dimensional pressure model**:
 
-> Shedder là cơ chế bảo vệ hiệu năng, không phải chứng minh correctness. Nếu data bị drop thuộc luồng causal, production-safe flow cần thêm sequencing, degraded-state marking, và khả năng recovery/halt rõ ràng.
+> The Shedder is a performance protection mechanism, not a correctness guarantee. If dropped data belongs to a causal stream, production-safe flows need additional sequencing, degraded-state marking, and explicit recovery/halt capabilities.
 
-**Công thức Áp Suất Đa Nhân Tố**:
+**Multi-Factor Pressure Formula**:
 
 ```
-P = w1 × drop_rate_norm     (35% — tỷ lệ vứt data/giây)
-  + w2 × depth_ratio         (30% — mức đầy của queues)
-  + w3 × latency_ratio       (20% — độ trễ vượt ngưỡng target)
-  + w4 × growth_ratio         (15% — tốc độ tăng queue depth)
+P = w1 × drop_rate_norm     (35% — drops/second rate)
+  + w2 × depth_ratio         (30% — queue fill level)
+  + w3 × latency_ratio       (20% — latency exceeding target)
+  + w4 × growth_ratio         (15% — queue depth growth rate)
   → clamped to [0.0, 1.0]
 ```
 
-**Continuous-time EWMA** — Thay vì dùng discrete IIR filter (bị ảnh hưởng bởi sample rate không đều), Kairos sử dụng hàm mũ liên tục `e^(-dt/τ)` để smooth:
+**Continuous-time EWMA** — Instead of using a discrete IIR filter (affected by irregular sample rate), Kairos uses a continuous exponential function `e^(-dt/τ)` for smoothing:
 
 ```python
 # ha_tang/kiem_soat_luu_luong/drop_policy/shedder.py
@@ -1479,20 +1482,20 @@ def update(self, latency_ns: float = 0.0) -> float:
     self._pressure = max(0.0, min(1.0, p))
 ```
 
-**Hysteresis State Machine (Schmitt Trigger)** — Chống dao động trạng thái khi pressure giao động quanh ngưỡng:
+**Hysteresis State Machine (Schmitt Trigger)** — Prevents state oscillation when pressure fluctuates around the threshold:
 
 ```python
-# Schmitt Trigger: 2 ngưỡng riêng biệt
-if p > self._high_thresh:      # 0.70 → bật shedding
+# Schmitt Trigger: 2 separate thresholds
+if p > self._high_thresh:      # 0.70 → activate shedding
     self._state = PressureLevel.HIGH
-elif p < self._low_thresh:     # 0.40 → tắt shedding
+elif p < self._low_thresh:     # 0.40 → deactivate shedding
     self._state = PressureLevel.LOW
-# Dải [0.40, 0.70]: giữ nguyên state → KHÔNG ping-pong
+# Band [0.40, 0.70]: maintain current state → NO ping-pong
 ```
 
-> **Tại sao cần Hysteresis?** Nếu chỉ dùng 1 ngưỡng (ví dụ 0.5), khi pressure dao động 0.49 → 0.51 → 0.49 liên tục, hệ thống sẽ bật/tắt shedding hàng chục lần/giây → hiệu ứng "giật" rất xấu. Với 2 ngưỡng, phải vượt qua 0.70 mới bật, và phải dưới 0.40 mới tắt.
+> **Why Hysteresis?** If only 1 threshold is used (e.g., 0.5), when pressure oscillates 0.49 → 0.51 → 0.49 continuously, the system toggles shedding on/off dozens of times per second → very poor "jittery" behavior. With 2 thresholds, it must exceed 0.70 to activate, and must drop below 0.40 to deactivate.
 
-**Head-Drop O(1)** — Khi queue đầy, vứt phần tử cũ nhất (`deque.popleft()` — C-level atomic):
+**Head-Drop O(1)** — When a queue is full, drop the oldest element (`deque.popleft()` — C-level atomic):
 
 ```python
 def maybe_drop(self, q: deque, priority_id: int) -> bool:
@@ -1505,28 +1508,28 @@ def maybe_drop(self, q: deque, priority_id: int) -> bool:
 
 #### Channel Manager (`channel_manager.py`)
 
-Quản lý 3 hàng đợi SPSC theo ưu tiên:
+Manages 3 SPSC queues by priority:
 
-| Priority | Kênh | Nội dung |
-|----------|------|----------|
-| CRITICAL | Kill Switch, Risk Alert | Luôn được drain trước |
-| SIGNAL | Ring buffer events | Ưu tiên cao |
-| DATA | Market data updates | Drain sau cùng, có fairness guarantee |
+| Priority | Channel | Content |
+|----------|---------|---------|
+| CRITICAL | Kill Switch, Risk Alert | Always drained first |
+| SIGNAL | Ring buffer events | High priority |
+| DATA | Market data updates | Drained last, with fairness guarantee |
 
-> SPSC queues chỉ an toàn khi có đúng một writer và một reader. Đây là assumption thiết kế — nếu codebase mở rộng và multiple producers/consumers được thêm, cần runtime assertion tại điểm produce/consume (ví dụ: `threading.get_ident()` guard hoặc `assert writer_id == current_thread`) để tránh data race. Latency đẹp không chứng minh được correctness khi assumption bị vi phạm.
+> SPSC queues are only safe when there is exactly one writer and one reader. This is a design assumption — if the codebase evolves and multiple producers/consumers are added, runtime assertions at produce/consume points (e.g., `threading.get_ident()` guard or `assert writer_id == current_thread`) are needed to prevent data races. Good latency numbers do not prove correctness when the assumption is violated.
 
 #### Event Schema (`luoc_do_du_lieu/v1/`)
 
-Chuẩn hóa cấu trúc toàn hệ thống bằng ctypes struct. Mọi event được đóng gói ở kích thước cố định để fit vừa CPU cache line:
+System-wide structure standardization using ctypes structs. All events are packed at fixed sizes to fit within CPU cache lines:
 
-* `_FeatureEventRaw` — **192 bytes** (3 cache lines 64B): chứa `symbol_id` (uint32), `exchange_ts` (int64), `receive_ts` (int64), `processed_ts` (int64), `source_latency_ns` (int64), `computation_latency_ns` (int64), `feature_mask` (uint32), và `features[16]` (float64 × 16 = 128B).
-* `_SignalEventRaw` — **64 bytes** (1 cache line): chứa `symbol_id` (uint32), `direction` (int8), `signal_ts` (int64), `exchange_ts` (int64), `receive_ts` (int64), `feature_ts` (int64).
+* `_FeatureEventRaw` — **192 bytes** (3 × 64B cache lines): contains `symbol_id` (uint32), `exchange_ts` (int64), `receive_ts` (int64), `processed_ts` (int64), `source_latency_ns` (int64), `computation_latency_ns` (int64), `feature_mask` (uint32), and `features[16]` (float64 × 16 = 128B).
+* `_SignalEventRaw` — **64 bytes** (1 cache line): contains `symbol_id` (uint32), `direction` (int8), `signal_ts` (int64), `exchange_ts` (int64), `receive_ts` (int64), `feature_ts` (int64).
 
-> **Tại sao 192 bytes?** 192 = 3 × 64B cache lines. Khi CPU nạp features của symbol `i`, nó kéo đúng 3 cache lines vào L1 cache. Header (symbol_id, timestamps) nằm trên cache line thứ 1, features nằm trên cache lines 2-3. Symbol `i+1` bắt đầu ở cache line thứ 4 → không bao giờ bị False-sharing.
+> **Why 192 bytes?** 192 = 3 × 64B cache lines. When the CPU loads features for symbol `i`, it pulls exactly 3 cache lines into L1 cache. The header (symbol_id, timestamps) occupies cache line 1, features occupy cache lines 2-3. Symbol `i+1` starts at cache line 4 → never experiences False-sharing.
 
-#### Time Validator (`dong_ho_thoi_gian/time_validator.py`) — 253 dòng
+#### Time Validator (`dong_ho_thoi_gian/time_validator.py`) — 253 lines
 
-Đảm bảo tính chính xác thời gian ở cấp sub-microsecond. Sử dụng **ctypes truy xuất trực tiếp `librt.so.1`** để đọc POSIX clock:
+Ensures time accuracy at the sub-microsecond level. Uses **ctypes to directly access `librt.so.1`** for reading the POSIX clock:
 
 ```python
 # ha_tang/dong_ho_thoi_gian/time_validator.py
@@ -1543,31 +1546,31 @@ def _clock_ns(clock_id: int) -> int:
         return ts.tv_sec * 1_000_000_000 + ts.tv_nsec
 ```
 
-**3 nguồn thời gian theo thứ tự ưu tiên**:
+**3 time sources in priority order**:
 
-| Nguồn | Độ chính xác | Điều kiện |
-|-------|-------------|----------|
-| PTP (IEEE 1588) | Sub-microsecond | `phc2sys` + `ptp4l` đang chạy |
-| NTP / chrony | ~1-10ms | Fallback khi PTP crash |
-| CLOCK_MONOTONIC | Chỉ thứ tự | Last resort — chỉ đảm bảo event ordering |
+| Source | Precision | Condition |
+|--------|-----------|-----------|
+| PTP (IEEE 1588) | Sub-microsecond | `phc2sys` + `ptp4l` running |
+| NTP / chrony | ~1-10ms | Fallback when PTP crashes |
+| CLOCK_MONOTONIC | Ordering only | Last resort — only guarantees event ordering |
 
-**Mô hình Graceful Degradation**:
+**Graceful Degradation Model**:
 
-| Trạng thái | Điều kiện | `capital_multiplier` | Hành vi |
-|-----------|-----------|---------------------|--------|
-| NOMINAL | Skew < 100µs | 1.0 | Giao dịch bình thường |
-| DEGRADED | Skew > 100µs hoặc PTP crash | 0.2 | Giảm 80% kích thước lệnh |
-| CRITICAL | Skew > 1ms hoặc clock diverge | 0.0 | Đóng băng toàn bộ giao dịch |
+| State | Condition | `capital_multiplier` | Behavior |
+|-------|-----------|---------------------|----------|
+| NOMINAL | Skew < 100µs | 1.0 | Normal trading |
+| DEGRADED | Skew > 100µs or PTP crash | 0.2 | Reduce order size by 80% |
+| CRITICAL | Skew > 1ms or clock diverge | 0.0 | Freeze all trading |
 
-> **Tại sao Clock Skew nguy hiểm?** OFI (Order Flow Imbalance) so sánh `best_bid` hiện tại với `prev_best_bid` dựa trên timestamp ordering. Nếu clock sai 1ms, hệ thống có thể xử lý tick cũ trước tick mới → OFI tính ra giá trị ngược dấu → signal sai → lệnh sai hướng.
+> **Why is Clock Skew dangerous?** OFI (Order Flow Imbalance) compares current `best_bid` with `prev_best_bid` based on timestamp ordering. If the clock is off by 1ms, the system may process an old tick before a new one → OFI computes a reversed sign → wrong signal → order in the wrong direction.
 
 ---
 
-### 3.8. Giám Sát & Kiểm Thử (Monitoring & Testing)
+### 3.8. Monitoring & Testing
 
-#### Latency Tracker (`giam_sat/theo_doi_do_tre/tracker.py`) — 78 dòng
+#### Latency Tracker (`giam_sat/theo_doi_do_tre/tracker.py`) — 78 lines
 
-Đo lường 4 phân đoạn độ trễ. Tất cả `record_*()` đều **O(1), zero-allocation**:
+Measures latency across 4 segments. All `record_*()` methods are **O(1), zero-allocation**:
 
 ```python
 # giam_sat/theo_doi_do_tre/tracker.py
@@ -1585,18 +1588,18 @@ class LatencyTracker:
         self.tick_to_feature.record(max(0, feature_ts - exchange_ts))
 ```
 
-| Phân đoạn | Clock Domain | Thread |
-|-----------|-------------|--------|
+| Segment | Clock Domain | Thread |
+|---------|-------------|--------|
 | Tick → Feature | wall clock (cross-process) | Data Engine |
 | Tick → Signal | wall clock (cross-process) | Signal Engine |
 | Signal → Order | wall clock (same process) | Thread 1 |
 | Order → Fill | monotonic (in-process) | Thread 2 |
 
-#### HdrHistogram (`giam_sat/theo_doi_do_tre/histogram.py`) — 116 dòng
+#### HdrHistogram (`giam_sat/theo_doi_do_tre/histogram.py`) — 116 lines
 
-Việc đo đạc độ trễ (latency) không được phép làm chậm chính hệ thống đang được đo. Nếu lưu mọi điểm dữ liệu độ trễ vào danh sách (list), RAM sẽ bị ăn mòn rất nhanh và gây GC pause. Kairos sử dụng **HdrHistogram** — cấu trúc dữ liệu đếm độ trễ siêu nhẹ, **O(1) record, zero-allocation**:
+Latency measurement must not slow down the system being measured. If every latency data point is appended to a list, RAM is consumed rapidly and causes GC pauses. Kairos uses **HdrHistogram** — an ultra-lightweight latency counting data structure, **O(1) record, zero-allocation**:
 
-**Bucket Layout (7-bit mantissa, 128 sub-buckets per exponent)**: Thay vì lưu giá trị chính xác, độ trễ được phân loại vào các "rổ" (buckets). Độ trễ càng lớn, "rổ" càng rộng (sai số 1% không đáng kể đối với 10 giây, nhưng 1µs rất quan trọng đối với độ trễ 10µs).
+**Bucket Layout (7-bit mantissa, 128 sub-buckets per exponent)**: Instead of storing exact values, latencies are classified into "buckets". Larger latencies get wider buckets (1% error is negligible for 10 seconds, but 1µs is critical for 10µs latencies).
 
 ```python
 # giam_sat/theo_doi_do_tre/histogram.py
@@ -1617,41 +1620,41 @@ def record(self, value_ns: int) -> None:
     self._cur[idx] += 1
 ```
 
-> **Tại sao không dùng list append?** `list.append(latency)` tạo Python int object mới → GC pressure. HdrHistogram chỉ tăng bộ đếm (`+=1`) tại một vị trí cố định trong mảng `array.array("L")` đã cấp phát từ trước — **hoàn toàn không sinh ra object rác**.
+> **Why not use list append?** `list.append(latency)` creates a new Python int object → GC pressure. HdrHistogram only increments a counter (`+=1`) at a fixed position in a pre-allocated `array.array("L")` — **produces absolutely zero garbage objects**.
 
-**Double-Buffering** — Vấn đề: làm sao để luồng đo đạc (Reporter) có thể đọc kết quả hiển thị lên màn hình mà không khóa (lock) luồng ghi dữ liệu (Hot-path)? Giải pháp: Dùng 2 mảng (buffers). Trong vòng 30 giây, Hot-path ghi vào mảng A. Sau 30s, Reporter đảo ngược con trỏ (mảng A thành mảng đóng băng để đọc, mảng B làm mới để Hot-path ghi). Việc tráo đổi này là atomic dưới GIL:
+**Double-Buffering** — Problem: how does the measurement thread (Reporter) read results for display without locking the data-writing thread (Hot-path)? Solution: Use 2 arrays (buffers). For 30 seconds, the Hot-path writes to array A. After 30s, the Reporter swaps pointers (array A becomes frozen for reading, array B becomes fresh for Hot-path writing). This swap is atomic under the GIL:
 
 ```python
 def swap(self) -> "HdrHistogram":
     """Off-path. Rotate buffers atomically under GIL."""
     old_cur, old_frozen = self._cur, self._frozen
     for i in range(ARRAY_SIZE):
-        old_frozen[i] = 0          # Xóa sạch mảng cũ
-    self._cur    = old_frozen      # Tráo mảng: mảng cũ thành mảng ghi mới
-    self._frozen = old_cur         # Mảng vừa ghi xong mang ra đọc
+        old_frozen[i] = 0          # Clear the old array
+    self._cur    = old_frozen      # Swap: old array becomes new write target
+    self._frozen = old_cur         # Just-written array is now available for reading
     return self
 ```
 
-#### System Metrics Collector (`giam_sat/chi_so_hieu_suat/collector.py`) — 317 dòng
+#### System Metrics Collector (`giam_sat/chi_so_hieu_suat/collector.py`) — 317 lines
 
-Hệ thống cần theo dõi RAM, CPU, và mức sử dụng GC liên tục. Nhưng các lệnh như lấy CPU (`psutil.cpu_percent()`) hay quét RAM (`tracemalloc.take_snapshot()`) là I/O-blocking — chúng có thể treo chương trình hàng chục mili-giây.
+The system must continuously monitor RAM, CPU, and GC utilization. However, operations like fetching CPU usage (`psutil.cpu_percent()`) or scanning RAM (`tracemalloc.take_snapshot()`) are I/O-blocking — they can hang the program for tens of milliseconds.
 
-Giải pháp: Chạy Collector trên **Dedicated OS Thread** riêng biệt (Thread của hệ điều hành, không phải asyncio). Kiến trúc 3 tầng:
+Solution: Run the Collector on a **Dedicated OS Thread** (a real OS thread, not asyncio). 3-tier architecture:
 
 ```
 Collector thread  ──push()──►  _buffer  ──drain()──►  Reporter (asyncio)
 TM daemon thread  ──────────►  ctypes.c_double       ──►  Collector reads
 ```
 
-**Tracemalloc Safety Gates** — Tính năng "chụp ảnh RAM" (`take_snapshot`) rất đắt đỏ (stop-the-world). Do đó, nó bị khóa sau 3 "cửa an toàn":
+**Tracemalloc Safety Gates** — The "RAM snapshot" feature (`take_snapshot`) is very expensive (stop-the-world). Therefore, it is gated behind 3 safety checks:
 
-| Gate | Điều kiện | Mục đích |
-|------|-----------|----------|
-| RSS Threshold | `RSS > tracemalloc_rss_threshold_mb` | Chỉ chụp ảnh RAM nếu máy đang tốn quá nhiều RAM |
-| Cooldown | `≥ tracemalloc_cooldown_s` giữa 2 lần | Tránh việc chụp liên tục gây nghẽn máy |
-| Single-flight Lock | `threading.Lock` non-blocking | Đảm bảo chỉ có 1 tiến trình chụp ảnh RAM tại một thời điểm |
+| Gate | Condition | Purpose |
+|------|-----------|---------|
+| RSS Threshold | `RSS > tracemalloc_rss_threshold_mb` | Only snapshot RAM if consumption is excessive |
+| Cooldown | `≥ tracemalloc_cooldown_s` between snapshots | Prevent continuous snapshots from causing congestion |
+| Single-flight Lock | `threading.Lock` non-blocking | Ensure only 1 snapshot operation at a time |
 
-**GC Metrics** — Tín hiệu hạng nhất cho hệ low-latency. Việc theo dõi xem Garbage Collector có bị tạm ngưng hay không là rất quan trọng. Bằng cách lấy delta của `gc.get_stats()["collections"]`, ta biết ngay trong giây vừa rồi hệ thống có bị khựng vì dọn rác hay không.
+**GC Metrics** — A first-class signal for low-latency systems. Monitoring whether the Garbage Collector has paused is critical. By taking the delta of `gc.get_stats()["collections"]`, we immediately know whether the system stuttered due to garbage collection in the past second.
 
 ```python
 # collector.py — GC pause detection
@@ -1661,35 +1664,35 @@ gc_collections_delta: tuple[int, int, int]  # GC runs per generation
 
 #### Alert System (`giam_sat/canh_bao/`)
 
-* `alert_manager.py` — Orchestrator quản lý Alert với Deduplication (chống spam).
-* `alert_rules.py` — Rule Engine đánh giá cảnh báo dựa trên PnL, Latency, Error Rate.
-* `telegram_sender.py` — Gửi tin nhắn Alert qua Telegram Bot API.
+* `alert_manager.py` — Alert orchestrator with Deduplication (anti-spam).
+* `alert_rules.py` — Rule Engine that evaluates alerts based on PnL, Latency, Error Rate.
+* `telegram_sender.py` — Sends alert messages via Telegram Bot API.
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d39e89ec-f3a2-4eb0-8b89-b194853be762" />
 
 #### Test Suite (`test/`)
 
-| File | Mục đích |
-|------|----------|
-| `test_chaos_risk.py` | 24 tests — Chaos Test, cố tình gây lỗi để kiểm tra phục hồi |
+| File | Purpose |
+|------|---------|
+| `test_chaos_risk.py` | 24 tests — Chaos Testing, intentionally inducing failures to verify recovery |
 | `test_d0_lineage.py` | 25 tests — [M-D0] Data Lineage Registry |
 | `test_d1_ingestion.py` | 31 tests — [M-D1] Raw Data Ingestion |
 | `test_d2_gap_reconciliation.py` | 37 tests — [M-D2] Gap Reconciliation |
 | `test_d3_pit_universe.py` | 32 tests — [M-D3] PiT Universe Manager |
 | `test_d4_feature_cache.py` | 29 tests — [M-D4] Feature Cache |
-| `test_execution_pipeline.py` | 40 tests — End-to-end pipeline thực thi lệnh |
+| `test_execution_pipeline.py` | 40 tests — End-to-end execution pipeline |
 | `test_exit_coordinator.py` | 18 tests — ExitCoordinator state machine, cooldown, quarantine |
 | `test_exit_e2e.py` | 12 tests — Exit system end-to-end integration |
-| `test_feature_layer.py` | 48 tests — Kiểm thử lớp tính năng |
+| `test_feature_layer.py` | 48 tests — Feature layer testing |
 | `test_live_runner.py` | 74 tests — Live Runner, 14 components |
-| `test_paper_adapter_queries.py` | 10 tests cho `PaperExchangeAdapter.get_positions/get_balances/get_funding_history` |
-| `test_position_funding.py` | 13 tests cho `PositionSynchronizer` (full_sync, drift detection, kill-switch) và `FundingCollector` |
+| `test_paper_adapter_queries.py` | 10 tests for `PaperExchangeAdapter.get_positions/get_balances/get_funding_history` |
+| `test_position_funding.py` | 13 tests for `PositionSynchronizer` (full_sync, drift detection, kill-switch) and `FundingCollector` |
 | `test_position_sizer.py` | 14 tests — PositionSizer (qty, anti-flip, lot rounding) |
-| `test_profiler.py` | Đo hiệu năng hệ thống |
-| `test_rest_api.py` | 4 tests — REST API calls tới exchanges |
-| `test_session_pnl.py` | 20 tests cho `SessionManager` (checksum, rotate, crash-resilient write) và `PnLAggregator` (on_fill, checkpoint, scale downgrade, integrity, replay) |
-| `test_signal_engine.py` | 10 tests — Engine tín hiệu |
-| `test_state.py` | Kiểm thử WAL + state recovery |
+| `test_profiler.py` | System performance benchmarking |
+| `test_rest_api.py` | 4 tests — REST API calls to exchanges |
+| `test_session_pnl.py` | 20 tests for `SessionManager` (checksum, rotate, crash-resilient write) and `PnLAggregator` (on_fill, checkpoint, scale downgrade, integrity, replay) |
+| `test_signal_engine.py` | 10 tests — Signal Engine |
+| `test_state.py` | WAL + state recovery tests |
 | `test_strategies.py` | 32 tests — 6 exit strategies + composite |
 | `xem_du_lieu_binance.py` | Raw data stream inspector — Binance |
 | `xem_du_lieu_bybit.py` | Raw data stream inspector — Bybit |
@@ -1697,35 +1700,35 @@ gc_collections_delta: tuple[int, int, int]  # GC runs per generation
 
 ---
 
-## 4. Ràng Buộc & Quyết Định Thiết Kế (Design Constraints & Engineering Decisions)
+## 4. Design Constraints & Engineering Decisions
 
-Phần này ghi lại các quyết định thiết kế có trade-off rõ ràng — tại sao chọn thiết kế A thay vì B, và invariant nào phải giữ để thiết kế còn đúng. Mỗi mục có evidence requirement để chứng minh claim còn đúng sau thay đổi.
+This section documents design decisions with clear trade-offs — why design A was chosen over design B, and which invariants must hold for the design to remain correct. Each item has an evidence requirement to prove the claim still holds after changes.
 
 ---
 
-### 4.1. Zero-Allocation Design Constraint (Chống GC Pauses)
+### 4.1. Zero-Allocation Design Constraint (Preventing GC Pauses)
 
-**Ràng buộc thiết kế:** Python GC Gen-0 collection gây latency spike **1-5ms**, Gen-2 lên đến **50ms**. Trên hot-path (Thread 1), bất kỳ allocation nào đều là rủi ro GC pause.
+**Design constraint:** Python GC Gen-0 collection causes latency spikes of **1-5ms**, Gen-2 up to **50ms**. On the hot-path (Thread 1), any allocation is a GC pause risk.
 
-**Quy tắc:** Pre-allocation 100% tại `__init__`. Hot-path chỉ ghi đè lên vùng nhớ đã cấp phát — không tạo `dict`, `list`, hay `bytes` mới.
+**Rule:** 100% pre-allocation at `__init__`. The hot-path only overwrites pre-allocated memory regions — never creates new `dict`, `list`, or `bytes`.
 
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/c7223510-0a99-4729-9998-20c4128f6f92" />
 
 
 ```python
-# ANTI-PATTERN: Tạo dict mới MỖI tick → GC pressure
+# ANTI-PATTERN: Create new dict EVERY tick → GC pressure
 payload = {"price": 100.0, "qty": 1.0}   # 1 dict + 2 str keys + 2 float = 5 objects
 
-# KAIROS: Ghi đè field trên pre-allocated dataclass → zero objects
+# KAIROS: Overwrite fields on pre-allocated dataclass → zero objects
 self._scratch_payload.price = 100.0       # STORE_ATTR bytecode — 0 objects
 self._scratch_payload.qty   = 1.0
 ```
 
-**Danh sách đối tượng Pre-allocated trong Kairos**:
+**Pre-allocated objects in Kairos**:
 
-| Object | Vị trí | Kích thước | Mục đích |
-|--------|--------|-----------|----------|
+| Object | Location | Size | Purpose |
+|--------|----------|------|---------|
 | `_RingSlot[256]` | `vong_lap_su_kien.py` | 256 × 72B | SPSC Ring Buffer |
 | `_recv_buf` | `vong_lap_su_kien.py` | 64 bytes | ZMQ recv overlay |
 | `ScratchPayload` | `incremental_engine.py` | 48 bytes | Dict replacement |
@@ -1739,22 +1742,22 @@ self._scratch_payload.qty   = 1.0
 | `OrderPool[2048]` | `order_book.py` | 2048 × ~120B = 240KB | OMS Order Pool |
 | `_fill_id_cache` | `pnl_tracker.py` | 10K entries OrderedDict | Fill Idempotency |
 
-> **Kết quả**: Thread 1 (Hot-Path) gọi `gc.disable()` hoàn toàn. Không có GC nào chạy trên thread xử lý tín hiệu.
+> **Result**: Thread 1 (Hot-Path) calls `gc.disable()` entirely. No GC runs on the signal processing thread.
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/677f87c2-4f93-473c-b5d6-39f9bb66df8e" />
 
 ---
 
-### 4.2. Triết lý Memory Alignment (Chống False-Sharing)
+### 4.2. Memory Alignment Philosophy (Preventing False-Sharing)
 
-**Thiết kế:** Padding mọi struct quan trọng vào bội số 64 bytes để đảm bảo mỗi struct chiếm đúng 1 cache line, loại bỏ false-sharing giữa các thread:
+**Design:** Pad all critical structs to multiples of 64 bytes to ensure each struct occupies exactly 1 cache line, eliminating false-sharing between threads:
 
 ```python
-# Struct 50 bytes — 2 symbols có thể nằm chung cache line
+# 50-byte struct — 2 symbols may share a cache line
 class BadStruct(ctypes.Structure):
     _fields_ = [("data", ctypes.c_char * 50)]  # 50B → False-sharing risk
 
-# Struct CHÍNH XÁC 64 bytes — 1 struct = 1 cache line = 0 False-sharing
+# Struct EXACTLY 64 bytes — 1 struct = 1 cache line = 0 False-sharing
 class _WALEntry(ctypes.LittleEndianStructure):
     _pack_ = 1
     _fields_ = [
@@ -1764,7 +1767,7 @@ class _WALEntry(ctypes.LittleEndianStructure):
         ("flags",    ctypes.c_uint32),    # 4B
         ("payload",  ctypes.c_char * 32), # 32B
         ("crc32",    ctypes.c_uint32),    # 4B
-        ("_align",   ctypes.c_uint32),    # 4B ← PADDING để đạt 64B
+        ("_align",   ctypes.c_uint32),    # 4B ← PADDING to reach 64B
     ]   # Total: 8+8+4+4+32+4+4 = 64 bytes ✓
 ```
 
@@ -1773,18 +1776,18 @@ class _WALEntry(ctypes.LittleEndianStructure):
 
 ---
 
-### 4.3. ctypes.memmove — Bypass Python Object Layer
+### 4.3. ctypes.memmove — Bypassing the Python Object Layer
 
-**Context:** Copy 16 float64 bằng Python for-loop tạo 16 temporary Python float objects (~1-2µs).
+**Context:** Copying 16 float64 values via a Python for-loop creates 16 temporary Python float objects (~1-2µs).
 
-**Thiết kế:** `ctypes.memmove` copy trực tiếp 128 bytes ở tốc độ C (~0.05µs, nhanh gấp **20-40×**):
+**Design:** `ctypes.memmove` directly copies 128 bytes at C speed (~0.05µs, **20-40× faster**):
 
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/d24c3875-231a-450d-bde9-33841a69d72e" />
 
 ```python
-# Python loop: 16 objects tạm, ~1.5µs
+# Python loop: 16 temporary objects, ~1.5µs
 for i in range(16):
-    draft[i] = store_features[i]   # Mỗi lần = PyFloat_FromDouble + GC track
+    draft[i] = store_features[i]   # Each = PyFloat_FromDouble + GC track
 
 # ctypes.memmove: 0 objects, ~0.05µs
 ctypes.memmove(
@@ -1792,44 +1795,44 @@ ctypes.memmove(
     self._sym_src_ptrs[symbol_id],        # src: pre-computed pointer
     128,                                   # 16 × 8 bytes
 )
-# Pointer pre-computed tại register_symbol() → hot-path không gọi .ctypes.data
+# Pointer pre-computed at register_symbol() → hot-path never calls .ctypes.data
 ```
 
 ---
 
-### 4.4. Transactional Update Protocol (Chống Data Corruption)
+### 4.4. Transactional Update Protocol (Preventing Data Corruption)
 
-**Invariant:** Nếu `commit_raw()` bị reject (backpressure/stale), `SymbolState` phải rollback về trạng thái trước. State và store không bao giờ được bất đồng bộ.
+**Invariant:** If `commit_raw()` is rejected (backpressure/stale), `SymbolState` must roll back to the previous state. State and store must never fall out of sync.
 
-**Protocol 4 bước — compute trên draft, commit hoặc rollback:**
+**4-step protocol — compute on draft, commit or rollback:**
 
 ```
-                    ┌─ commit_raw() PASS ──► Ghi vào Live Store ✓
+                    ┌─ commit_raw() PASS ──► Write to Live Store ✓
 Snapshot → Draft ─► │
-                    └─ commit_raw() FAIL ──► Rollback SymbolState từ Scratch ✓
+                    └─ commit_raw() FAIL ──► Rollback SymbolState from Scratch ✓
 ```
 
-Cả accept path và reject path đều **zero allocation** nhờ pre-allocated scratch buffer.
+Both the accept path and the reject path are **zero allocation** thanks to the pre-allocated scratch buffer.
 
 ---
 
 ### 4.5. Microstructure Simulation (Paper Trading Realism)
 
-**Mục tiêu:** Loại bỏ Simulation-to-Reality Gap — Paper Engine phải tái hiện đủ 5 yếu tố market microstructure để backtest có thể dùng làm evidence cho live deployment:
+**Objective:** Eliminate the Simulation-to-Reality Gap — the Paper Engine must reproduce 5 market microstructure factors so that backtest results can serve as evidence for live deployment:
 
-| Yếu tố | Cách mô phỏng | Tác động |
-|--------|--------------|---------|
-| Network Latency | Lognormal Jitter (heavy-tail) | Lệnh đến sàn bị trễ 5-500ms |
-| Slippage | Kyle's Alpha — self-impact | Lệnh lớn đẩy giá bất lợi |
-| Liquidity Mirage | Spoofing simulation | Sổ lệnh "dày" nhưng rút trước khi khớp |
-| Adverse Selection | Toxicity ratio | Lệnh bị front-run bởi informed trader |
-| Flash Crash | `shock_simulator.py` | Giá lao dốc 5-20% trong vài giây |
+| Factor | Simulation Method | Impact |
+|--------|--------------------|--------|
+| Network Latency | Lognormal Jitter (heavy-tail) | Orders arrive at exchange delayed by 5-500ms |
+| Slippage | Kyle's Alpha — self-impact | Large orders push price adversely |
+| Liquidity Mirage | Spoofing simulation | Orderbook appears "thick" but pulls before fill |
+| Adverse Selection | Toxicity ratio | Orders front-run by informed traders |
+| Flash Crash | `shock_simulator.py` | Price drops 5-20% within seconds |
 
 ---
 
-### 4.6. Dual-Channel Failsafe (Chống Single Point of Failure)
+### 4.6. Dual-Channel Failsafe (Preventing Single Point of Failure)
 
-**Thiết kế:** Watchdog dùng 2 kênh hoàn toàn độc lập. Trigger chỉ khi **CẢ HAI** miss ≥ threshold — loại bỏ false-positive từ network glitch đơn lẻ:
+**Design:** Watchdog uses 2 fully independent channels. Triggers only when **BOTH** miss ≥ threshold — eliminates false-positives from isolated network glitches:
 
 ```
 Thread 5 ──► ZMQ PUB (port 5559)  ──► Watchdog SUB  ──┐
@@ -1837,42 +1840,42 @@ Thread 5 ──► ZMQ PUB (port 5559)  ──► Watchdog SUB  ──┐
 Thread 5 ──► os.utime(alive_path) ──► Watchdog stat ──┘
 ```
 
-Watchdog chỉ kích hoạt Kill Switch khi **CẢ HAI** kênh mất tín hiệu liên tiếp → loại bỏ false-positive từ network glitch. Khi trigger: Market Close toàn bộ vị thế → đặt `ho_du_lieu/he_thong/system.KILLED` → chặn khởi động cho đến khi điều tra.
+The Watchdog only activates the Kill Switch when **BOTH** channels lose signal consecutively → eliminates false-positives from network glitches. On trigger: Market-close all positions → set `ho_du_lieu/he_thong/system.KILLED` → block restart until investigation completes.
 
 ---
 
 ### 4.7. Clock Integrity — TimeValidator
 
-**Invariant:** Clock skew > 1ms khiến OFI/EMA nhận tick lộn thứ tự → signal có thể đảo dấu. Hệ thống phải giảm exposure trước khi tín hiệu sai gây lệnh ngược chiều.
+**Invariant:** Clock skew > 1ms causes OFI/EMA to receive ticks out of order → signals may reverse sign. The system must reduce exposure before incorrect signals cause counter-directional orders.
 
-**`TimeValidator` 3 tầng — PTP → NTP → Monotonic, graceful degradation:**
+**`TimeValidator` 3-tier — PTP → NTP → Monotonic, graceful degradation:**
 
 ```python
-# Degradation chain trong Thread 1 (hot-path):
+# Degradation chain in Thread 1 (hot-path):
 _tv_mult = time_validator.capital_multiplier()
 
 if _tv_mult == 0.0:               # CRITICAL: clock diverge
     risk.rollback(sid, order_usdt)
-    self._drop("time_critical")    # Đóng băng 100% giao dịch
+    self._drop("time_critical")    # Freeze 100% of trading
 
 if _tv_mult < 1.0:                # DEGRADED: PTP crash
-    # Cho qua 1/5 lệnh → giảm exposure 80%
+    # Allow 1/5 of orders → reduce exposure by 80%
     if write_idx % round(1.0 / _tv_mult) != 0:
         risk.rollback(sid, order_usdt)
         self._drop("time_degraded")
 ```
 
-> **Thiết kế:** Không hard-stop ngay — degrade gracefully theo bậc để tránh cascade liquidation. `capital_multiplier = 0.2` khi DEGRADED (giảm 80% size); `= 0.0` khi CRITICAL (đóng băng hoàn toàn).
+> **Design:** No hard-stop — degrade gracefully by tier to avoid cascade liquidation. `capital_multiplier = 0.2` when DEGRADED (80% size reduction); `= 0.0` when CRITICAL (complete trading freeze).
 
 ---
 
-## 5. Công Nghệ & Thư Viện (Tech Stack)
+## 5. Tech Stack
 
-| Thành phần | Công nghệ | Vai trò |
-|-----------|-----------|---------|
-| Ngôn ngữ chính | Python 3.13+ | Core logic, async I/O |
+| Component | Technology | Role |
+|-----------|-----------|------|
+| Core Language | Python 3.13+ | Core logic, async I/O |
 | Messaging | ZeroMQ (pyzmq) | Event Bus PUB/SUB, inproc/tcp |
-| Serialization | orjson | JSON serialize ~10× nhanh hơn stdlib |
+| Serialization | orjson | JSON serialize ~10× faster than stdlib |
 | Numerical | NumPy, ctypes | Structured arrays, memmove, zero-alloc |
 | Data Format | Apache Parquet | Columnar storage, Hive partitioning |
 | Data Processing | Polars | Vectorized backtest + Session compaction |
@@ -1888,41 +1891,41 @@ if _tv_mult < 1.0:                # DEGRADED: PTP crash
 
 ---
 
-## 6. Thống Kê Codebase
+## 6. Codebase Statistics
 
-| Metric | Giá trị |
-|--------|---------|
-| Tổng số module Python | 194 files (git-tracked) |
-| File lớn nhất | `vong_lap_su_kien.py` — 1105 dòng |
-| **Live Runner** | `live_runner.py` — 882 dòng (12-Step SRE Startup) |
-| Paper EMS Adapter | `paper_ems_adapter.py` — 711 dòng (19-Step Fill Pipeline) |
-| OMS OrderBook | `order_book.py` — 656 dòng |
-| PnL Aggregator | `pnl_aggregator.py` — 622 dòng |
-| Session Manager | `session_manager.py` — 575 dòng |
-| File quan trọng nhất | `risk_gate.py` — 557 dòng, 6 rules |
-| Position Synchronizer | `position_sync.py` — 383 dòng |
-| Execution Wrapper | `execution_wrapper.py` — 380 dòng |
-| Feature Engine | `incremental_engine.py` — 353 dòng |
-| Reconciler | `reconciler.py` — 346 dòng |
-| PnL Tracker | `pnl_tracker.py` — 323 dòng |
-| Feature Store | `memory_store.py` — 291 dòng |
-| Durable WAL | `durable_wal.py` — 290 dòng |
-| Fee Ledger | `fee_ledger.py` — 254 dòng |
-| Funding Collector | `funding_collector.py` — 234 dòng |
-| Circuit Breaker | `circuit_breaker.py` — 217 dòng |
-| Rate Limiter | `rate_limiter.py` — 212 dòng |
-| Retry Policy | `retry_policy.py` — 185 dòng |
-| Mark-to-Market | `mark_to_market.py` — 98 dòng |
-| OMS Serializer | `oms_serializer.py` — 112 dòng |
-| Latency Tracker | `tracker.py` — 78 dòng (tinh gọn) |
-| **Test: Live Runner** | `test_live_runner.py` — 966 dòng, 74 tests, 14 components |
-| Test: Execution | `test_execution_pipeline.py` — 534 dòng, 40 tests |
-| Test: Chaos Risk | `test_chaos_risk.py` — 441 dòng, 24 tests |
-| Số Alpha Features | 6 (MicroPrice, BookPressure, WelfordVar, EMA Fast/Slow, OFI) |
-| Số Thread song song | 5 (Hot-Path, Worker, Oracle, Logger, Watchdog) |
-| Số Live Daemons | 3 (HealthDaemon, ReconcilerDaemon, KillSwitchMonitor) |
-| Số Exchange hỗ trợ | 3 (Binance, OKX, Bybit) |
-| Số Risk Rules | 6 (DailyLoss, Drawdown, Rate, Duplicate, OpenOrders, Concentration) |
+| Metric | Value |
+|--------|-------|
+| Total Python modules | 194 files (git-tracked) |
+| Largest file | `vong_lap_su_kien.py` — 1105 lines |
+| **Live Runner** | `live_runner.py` — 882 lines (12-Step SRE Startup) |
+| Paper EMS Adapter | `paper_ems_adapter.py` — 711 lines (19-Step Fill Pipeline) |
+| OMS OrderBook | `order_book.py` — 656 lines |
+| PnL Aggregator | `pnl_aggregator.py` — 622 lines |
+| Session Manager | `session_manager.py` — 575 lines |
+| Most critical file | `risk_gate.py` — 557 lines, 6 rules |
+| Position Synchronizer | `position_sync.py` — 383 lines |
+| Execution Wrapper | `execution_wrapper.py` — 380 lines |
+| Feature Engine | `incremental_engine.py` — 353 lines |
+| Reconciler | `reconciler.py` — 346 lines |
+| PnL Tracker | `pnl_tracker.py` — 323 lines |
+| Feature Store | `memory_store.py` — 291 lines |
+| Durable WAL | `durable_wal.py` — 290 lines |
+| Fee Ledger | `fee_ledger.py` — 254 lines |
+| Funding Collector | `funding_collector.py` — 234 lines |
+| Circuit Breaker | `circuit_breaker.py` — 217 lines |
+| Rate Limiter | `rate_limiter.py` — 212 lines |
+| Retry Policy | `retry_policy.py` — 185 lines |
+| Mark-to-Market | `mark_to_market.py` — 98 lines |
+| OMS Serializer | `oms_serializer.py` — 112 lines |
+| Latency Tracker | `tracker.py` — 78 lines (lean) |
+| **Test: Live Runner** | `test_live_runner.py` — 966 lines, 74 tests, 14 components |
+| Test: Execution | `test_execution_pipeline.py` — 534 lines, 40 tests |
+| Test: Chaos Risk | `test_chaos_risk.py` — 441 lines, 24 tests |
+| Alpha Features | 6 (MicroPrice, BookPressure, WelfordVar, EMA Fast/Slow, OFI) |
+| Concurrent Threads | 5 (Hot-Path, Worker, Oracle, Logger, Watchdog) |
+| Live Daemons | 3 (HealthDaemon, ReconcilerDaemon, KillSwitchMonitor) |
+| Supported Exchanges | 3 (Binance, OKX, Bybit) |
+| Risk Rules | 6 (DailyLoss, Drawdown, Rate, Duplicate, OpenOrders, Concentration) |
 | PnL Scale Factor | 1e8 (100,000,000) — integer arithmetic |
 | WAL File Size | ~4MB (32 + 65536 × 64 bytes) |
 | OMS Order Pool | 2,048 slots (slots=True, ~3× RAM savings) |
@@ -1933,79 +1936,79 @@ if _tv_mult < 1.0:                # DEGRADED: PTP crash
 
 ---
 
-## 7. Hướng Phát Triển Tiếp Theo
+## 7. Roadmap
 
-1. **Formal Event Model & Sequencing** — Chuẩn hóa `sequence_id`, tách rõ `event_time` / `ingest_time`, thêm gap detection và policy rõ cho out-of-order / dropped events.
-2. **Strict WAL Coverage & Deterministic Replay** — Xác nhận mọi mutation trọng yếu đều đi qua WAL, replay từ snapshot + WAL rebuild ra cùng logical state, và không phụ thuộc thread scheduling.
-3. **Global State Machine & Kill Consistency** — Formalize trạng thái `INIT -> SYNC -> RUNNING -> HALT`, đồng bộ kill switch trên toàn bộ module có khả năng phát lệnh.
-4. **Invariant & Reconciliation System** — Bổ sung hoặc siết chặt runtime invariants cho order, position, balance, PnL; tăng tần suất đối soát với exchange khi phát hiện divergence.
-5. **Replay / Chaos / Fault Injection** — Mở rộng `test_chaos_risk.py`, replay historical streams, test restart giữa chừng, test race condition và stress load để kiểm tra correctness trước khi tối ưu thêm latency.
-6. **AI & Model Development** — Triển khai ONNX inference engine trong `hoc_may/suy_luan/`. Tích hợp Transformer-based Alpha model.
-7. **Grafana Integration** — Kết nối `SystemMetricsReporter`, `LatencyReporter`, `ExecutionWrapper.snapshot()`, và `PnLAggregator.dump_crash_state()` vào Grafana qua Prometheus exporter.
-8. **Multi-Strategy Execution & MLOps** — Kích hoạt `danh_ba_chien_luoc/` để chạy nhiều Alpha strategies song song, đồng thời tích hợp ML Monitoring (`sai_lech_dac_trung/`, `sai_lech_du_doan/`) để auto-disable model khi prediction drift vượt ngưỡng.
-
----
-
-## 8. Kiểm Tra Sẵn Sàng Production (Production Readiness Checklist)
-
-Phần này liệt kê 20 điểm kiểm tra tối thiểu trước khi triển khai Kairos hoặc bất kỳ hệ thống tham khảo từ Kairos cho môi trường real-money. Mỗi mục là một **gap đã xác định** trong kiến trúc hiện tại — không phải lý thuyết mà là điểm cụ thể cần bổ sung trước khi xem là production-safe.
-
-### Nhóm 1: Tính Đúng Đắn Sự Kiện (Event Correctness)
-
-| # | Điểm kiểm tra | Trạng thái hiện tại | Hành động cần thiết |
-|---|---------------|---------------------|---------------------|
-| 1 | Mọi event mang `sequence_id`, `event_time`, và `ingest_time` tách biệt | Thiếu `sequence_id` chuẩn hóa trên toàn pipeline | Thêm field `seq` tăng dần monotonic vào mọi event schema (`_FeatureEventRaw`, `_SignalEventRaw`) |
-| 2 | Gap detection trên mọi ZMQ SUB socket | ZMQ HWM = 10,000 drop messages silently | Detect gap từ `sequence_id`; policy rõ cho gap: `degraded` hoặc `halt`, không tiếp tục im lặng |
-| 3 | Drop event trên luồng causal (fill, risk update) không bị xử lý như coalescing | Shedder và HWM có thể drop fill/risk events | Phân loại event trước khi drop: luồng causal không được drop; nếu overflow → `halt` thay vì `popleft` |
-| 4 | Chính sách out-of-order được định nghĩa và test per stream | ROB window xử lý out-of-order nhưng không có policy rõ sau khi window hết hạn | Định nghĩa: event ngoài cửa sổ ROB bị accept muộn, reject, hay trigger `degraded`; thêm test cho từng trường hợp |
-
-### Nhóm 2: Tính Bền Vững State (Persistence & Replay)
-
-| # | Điểm kiểm tra | Trạng thái hiện tại | Hành động cần thiết |
-|---|---------------|---------------------|---------------------|
-| 5 | Mọi mutation state trọng yếu (position, order, PnL, balance) phải đi qua WAL trước side effect | Một số mutation path có thể bypass WAL (ví dụ: reconciler direct-write vào state) | Audit toàn bộ write path; đảm bảo không có `state.update_*()` nào thiếu WAL entry tương ứng |
-| 6 | Replay từ snapshot + WAL luôn rebuild ra cùng logical state | Replay được implement nhưng chưa có invariant test xác nhận | Viết test: inject fault sau mỗi WAL entry type → restart → assert state == pre-fault state |
-| 7 | WAL rotation đảm bảo không mất entry khi swap | `rotate_wal()` atomic swap nhưng caller chịu trách nhiệm archive WAL cũ | Thêm bước verify trong rotate: new WAL có đủ active order snapshot trước khi swap; test crash-during-rotate |
-
-### Nhóm 3: Tính Đồng Thời (Concurrency)
-
-| # | Điểm kiểm tra | Trạng thái hiện tại | Hành động cần thiết |
-|---|---------------|---------------------|---------------------|
-| 8 | SPSC ring buffer có runtime enforcement single writer / single reader | SPSC là assumption thiết kế, không có runtime guard | Thêm `assert` / `threading.get_ident()` guard tại `produce()` và `consume()` entry points; fail-fast nếu vi phạm |
-| 9 | OCC trong `pnl_tracker.py` đảm bảo operation idempotent và retry-safe | OCC reads `scale_ref.version` ngoài `sym_lock` → window race với `trigger_scale_downgrade` | Verify: mọi retry trong OCC loop có thể áp lại mà không có side effect; stress test với concurrent scale change |
-| 10 | Thread + asyncio ordering được document và stress test | Thread 2 nhận từ ring buffer; event arrival order ≠ request completion order | Document rõ: thread 1 push → thread 2 pop là FIFO; nhưng HTTP response ordering không đảm bảo; test race condition |
-
-### Nhóm 4: Kế Toán (Accounting)
-
-| # | Điểm kiểm tra | Trạng thái hiện tại | Hành động cần thiết |
-|---|---------------|---------------------|---------------------|
-| 11 | PnL multi-asset được normalize về base currency trước khi cộng dồn | `PnLAggregator` hiện dùng integer-scaled arithmetic nhưng không có lớp currency normalization | Thêm `CurrencyNormalizer`: convert mọi PnL về USDT bằng mark price; test với portfolio có BTC-margined + USDT-margined |
-| 12 | Funding sign convention được verify và test per exchange | `BINANCE/BYBIT` negate, `OKX` pass-through đã implement trong `FundingCollector` | Thêm exchange mock test với known funding payment: assert sign sau normalization; document trong `universe.yaml` |
-| 13 | Fee model (maker/taker/rebate/inverse product) được test so với exchange statement | Fee anomaly detection có (fee > 1% notional → warning) nhưng không có cross-check với exchange API | Viết reconciliation test: sum fees trong WAL vs sum fees từ exchange `/api/v1/income`; alert khi diverge > threshold |
-
-### Nhóm 5: Kill Switch & State Machine (Risk Formalization)
-
-| # | Điểm kiểm tra | Trạng thái hiện tại | Hành động cần thiết |
-|---|---------------|---------------------|---------------------|
-| 14 | Global halt flag được kiểm tra atomic bởi mọi code path có thể phát lệnh | Watchdog set `system.KILLED` file; nhưng check là file I/O, không phải in-memory atomic flag | Thêm `threading.Event` / `multiprocessing.Event` `_halt_flag`; mọi `protected_call()` check flag trước khi acquire RateLimiter |
-| 15 | Kill switch trigger → toàn bộ execution path dừng, không có lệnh mới | Watchdog trigger market-close nhưng không đảm bảo ExecutionGateway ring buffer đã drain | Test: trigger kill → assert không có `ORDER_SENT` WAL entry nào sau thời điểm kill |
-| 16 | State machine `INIT → SYNC → RUNNING → HALT` được enforce, không thể skip | State transitions không được formalize; ví dụ có thể `RUNNING` khi WAL replay chưa xong | Implement `EngineState` enum; mọi transition phải qua method rõ ràng với pre/post condition check |
-| 17 | Kill consistency: không có execution path nào có thể phát lệnh khi engine ở state `HALT` | Risk Gate check state nhưng các path khác (reconciler, self-heal) không kiểm tra `HALT` | Audit mọi `adapter.place_order()` call site; bọc trong `_guard_halt()` trước khi gọi |
-
-### Nhóm 6: Bất Biến & Kiểm Thử (Integrity & Testing)
-
-| # | Điểm kiểm tra | Trạng thái hiện tại | Hành động cần thiết |
-|---|---------------|---------------------|---------------------|
-| 18 | Runtime invariant checks cho order, position, balance, PnL chạy ở mỗi checkpoint | `verify_integrity()` implement nhưng không được schedule chạy định kỳ | Gọi `verify_integrity()` sau mỗi WAL checkpoint và sau mỗi reconciler cycle; log violation với severity |
-| 19 | Tần suất reconciliation với exchange tăng tự động khi phát hiện divergence | Reconciler chạy cố định 60s; drift detection chạy 60s | Implement adaptive schedule: 1 violation → 30s; 2 violations → 10s; 3 violations → kill switch |
-| 20 | Chaos/fault injection và replay stress test đã pass | `test_chaos_risk.py` có 4 adversarial scenarios; chưa có restart-mid-replay test | Thêm: kill-during-WAL-write, restart-during-reconciliation, clock-jump test, 24h stream replay, concurrent-fills race stress |
-
-> Danh sách này không phải "nice to have" — mỗi mục đại diện cho một failure mode đã được xác định qua code review. Triển khai Kairos cho tiền thật trước khi tất cả 20 điểm được kiểm tra và pass là rủi ro có thể định lượng được.
+1. **Formal Event Model & Sequencing** — Standardize `sequence_id`, explicitly separate `event_time` / `ingest_time`, add gap detection and clear policies for out-of-order / dropped events.
+2. **Strict WAL Coverage & Deterministic Replay** — Confirm that all critical mutations pass through the WAL, that replay from snapshot + WAL rebuilds to the same logical state, and that the result is independent of thread scheduling.
+3. **Global State Machine & Kill Consistency** — Formalize the `INIT -> SYNC -> RUNNING -> HALT` state machine, synchronize the kill switch across all modules capable of placing orders.
+4. **Invariant & Reconciliation System** — Add or strengthen runtime invariants for orders, positions, balances, PnL; increase reconciliation frequency with the exchange when divergence is detected.
+5. **Replay / Chaos / Fault Injection** — Expand `test_chaos_risk.py`, replay historical streams, test mid-process restarts, test race conditions and stress loads to verify correctness before further latency optimization.
+6. **AI & Model Development** — Deploy ONNX inference engine in `hoc_may/suy_luan/`. Integrate Transformer-based Alpha model.
+7. **Grafana Integration** — Connect `SystemMetricsReporter`, `LatencyReporter`, `ExecutionWrapper.snapshot()`, and `PnLAggregator.dump_crash_state()` to Grafana via Prometheus exporter.
+8. **Multi-Strategy Execution & MLOps** — Activate `danh_ba_chien_luoc/` to run multiple Alpha strategies concurrently, while integrating ML Monitoring (`sai_lech_dac_trung/`, `sai_lech_du_doan/`) to auto-disable models when prediction drift exceeds thresholds.
 
 ---
 
-> **KAIROS v3.2** — *"Thời điểm quyết định"* (Καιρός)
+## 8. Production Readiness Checklist
+
+This section enumerates 20 minimum verification points before deploying Kairos or any system referencing Kairos for real-money environments. Each item represents an **identified gap** in the current architecture — not theoretical, but a specific point that must be addressed before considering the system production-safe.
+
+### Group 1: Event Correctness
+
+| # | Checkpoint | Current Status | Required Action |
+|---|-----------|---------------|-----------------|
+| 1 | All events carry `sequence_id`, `event_time`, and `ingest_time` as separate fields | Lacks standardized `sequence_id` across the full pipeline | Add monotonically increasing `seq` field to all event schemas (`_FeatureEventRaw`, `_SignalEventRaw`) |
+| 2 | Gap detection on every ZMQ SUB socket | ZMQ HWM = 10,000 drops messages silently | Detect gaps from `sequence_id`; clear policy for gaps: `degraded` or `halt`, not silent continuation |
+| 3 | Dropped events on causal streams (fill, risk update) not treated as coalescing | Shedder and HWM can drop fill/risk events | Classify events before dropping: causal streams must not be dropped; on overflow → `halt` instead of `popleft` |
+| 4 | Out-of-order policy defined and tested per stream | ROB window handles out-of-order but no clear policy after window expiry | Define: events beyond the ROB window are accepted late, rejected, or trigger `degraded`; add tests for each case |
+
+### Group 2: State Persistence & Replay
+
+| # | Checkpoint | Current Status | Required Action |
+|---|-----------|---------------|-----------------|
+| 5 | Every critical state mutation (position, order, PnL, balance) passes through WAL before side effects | Some mutation paths may bypass WAL (e.g., reconciler direct-write to state) | Audit all write paths; ensure no `state.update_*()` lacks a corresponding WAL entry |
+| 6 | Replay from snapshot + WAL always rebuilds to the same logical state | Replay is implemented but lacks invariant tests for confirmation | Write test: inject fault after each WAL entry type → restart → assert state == pre-fault state |
+| 7 | WAL rotation guarantees no entry loss during swap | `rotate_wal()` atomic swap but caller owns old WAL archive responsibility | Add verification step in rotate: new WAL contains complete active order snapshot before swap; test crash-during-rotate |
+
+### Group 3: Concurrency
+
+| # | Checkpoint | Current Status | Required Action |
+|---|-----------|---------------|-----------------|
+| 8 | SPSC ring buffer has runtime enforcement of single writer / single reader | SPSC is a design assumption, not a runtime guard | Add `assert` / `threading.get_ident()` guard at `produce()` and `consume()` entry points; fail-fast on violation |
+| 9 | OCC in `pnl_tracker.py` ensures operations are idempotent and retry-safe | OCC reads `scale_ref.version` outside `sym_lock` → race window with `trigger_scale_downgrade` | Verify: every retry in the OCC loop can be re-applied without side effects; stress test with concurrent scale changes |
+| 10 | Thread + asyncio ordering documented and stress tested | Thread 2 reads from ring buffer; event arrival order ≠ request completion order | Document clearly: thread 1 push → thread 2 pop is FIFO; but HTTP response ordering is not guaranteed; test race conditions |
+
+### Group 4: Accounting
+
+| # | Checkpoint | Current Status | Required Action |
+|---|-----------|---------------|-----------------|
+| 11 | Multi-asset PnL normalized to base currency before aggregation | `PnLAggregator` uses integer-scaled arithmetic but lacks a currency normalization layer | Add `CurrencyNormalizer`: convert all PnL to USDT via mark price; test with portfolio containing BTC-margined + USDT-margined |
+| 12 | Funding sign convention verified and tested per exchange | `BINANCE/BYBIT` negate, `OKX` pass-through implemented in `FundingCollector` | Add exchange mock test with known funding payment: assert sign after normalization; document in `universe.yaml` |
+| 13 | Fee model (maker/taker/rebate/inverse product) tested against exchange statements | Fee anomaly detection exists (fee > 1% notional → warning) but no cross-check with exchange API | Write reconciliation test: sum fees in WAL vs sum fees from exchange `/api/v1/income`; alert when divergence > threshold |
+
+### Group 5: Kill Switch & State Machine (Risk Formalization)
+
+| # | Checkpoint | Current Status | Required Action |
+|---|-----------|---------------|-----------------|
+| 14 | Global halt flag checked atomically by every code path capable of placing orders | Watchdog sets `system.KILLED` file; but the check is file I/O, not an in-memory atomic flag | Add `threading.Event` / `multiprocessing.Event` `_halt_flag`; every `protected_call()` checks the flag before acquiring RateLimiter |
+| 15 | Kill switch trigger → all execution paths stop, no new orders | Watchdog triggers market-close but doesn't guarantee ExecutionGateway ring buffer has been drained | Test: trigger kill → assert no `ORDER_SENT` WAL entry exists after the kill timestamp |
+| 16 | State machine `INIT → SYNC → RUNNING → HALT` enforced, cannot be skipped | State transitions are not formalized; e.g., it's possible to reach `RUNNING` before WAL replay completes | Implement `EngineState` enum; every transition must go through explicit methods with pre/post condition checks |
+| 17 | Kill consistency: no execution path can place orders when engine is in `HALT` state | Risk Gate checks state but other paths (reconciler, self-heal) don't check `HALT` | Audit all `adapter.place_order()` call sites; wrap in `_guard_halt()` before invocation |
+
+### Group 6: Integrity & Testing
+
+| # | Checkpoint | Current Status | Required Action |
+|---|-----------|---------------|-----------------|
+| 18 | Runtime invariant checks for orders, positions, balances, PnL run at every checkpoint | `verify_integrity()` implemented but not scheduled for periodic execution | Call `verify_integrity()` after every WAL checkpoint and after every reconciler cycle; log violations with severity |
+| 19 | Exchange reconciliation frequency automatically increases when divergence is detected | Reconciler runs at fixed 60s; drift detection runs at 60s | Implement adaptive schedule: 1 violation → 30s; 2 violations → 10s; 3 violations → kill switch |
+| 20 | Chaos/fault injection and replay stress tests have passed | `test_chaos_risk.py` has 4 adversarial scenarios; no restart-mid-replay test exists | Add: kill-during-WAL-write, restart-during-reconciliation, clock-jump test, 24h stream replay, concurrent-fills race stress |
+
+> This list is not "nice to have" — each item represents a failure mode identified through code review. Deploying Kairos for real money before all 20 points are verified and passing represents quantifiable risk.
+
+---
+
+> **KAIROS v3.2** — *"The decisive moment"* (Καιρός)
 >
-> Mọi microsecond đều có giá trị. Mọi dòng code đều có mục đích.
+> Every microsecond counts. Every line of code has a purpose.
 >
-> **Tác giả:** P Vinh ([ppvinh1513@gmail.com](mailto:ppvinh1513@gmail.com))
+> **Author:** P Vinh ([ppvinh1513@gmail.com](mailto:ppvinh1513@gmail.com))
